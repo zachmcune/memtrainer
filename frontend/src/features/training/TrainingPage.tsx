@@ -12,6 +12,9 @@ import { CardPicker, NumberPad } from './inputs';
 
 type Phase = 'idle' | 'running' | 'finished';
 
+/** Stored in attempt records when the user taps "I don't know". */
+export const IDK_ANSWER = '—';
+
 export function TrainingPage() {
   const { settings, loading } = useSettings();
   const navigate = useNavigate();
@@ -132,6 +135,7 @@ function TrainingRunner({
   const [results, setResults] = useState<AttemptResult[]>([]);
   const [revealing, setRevealing] = useState(false);
   const [lastCorrect, setLastCorrect] = useState<boolean | null>(null);
+  const [lastWasIdk, setLastWasIdk] = useState(false);
   const [numStr, setNumStr] = useState('');
   const [rank, setRank] = useState<Rank | null>(null);
   const [suit, setSuit] = useState<Suit | null>(null);
@@ -152,33 +156,42 @@ function TrainingRunner({
     setSuit(null);
   }, []);
 
+  const recordAttempt = useCallback(
+    (userAnswer: string, correct: boolean, wasIdk = false) => {
+      if (revealing || !card) return;
+      const timeMs = performance.now() - startRef.current;
+      const result: AttemptResult = {
+        code: card.code,
+        position,
+        mode,
+        userAnswer,
+        correct,
+        timeMs,
+        timestamp: Date.now(),
+      };
+      setResults((prev) => [...prev, result]);
+      setLastCorrect(correct);
+      setLastWasIdk(wasIdk);
+      setRevealing(true);
+    },
+    [revealing, card, mode, position],
+  );
+
   const submit = useCallback(() => {
     if (revealing || !card) return;
-    const timeMs = performance.now() - startRef.current;
-    let userAnswer: string;
-    let correct: boolean;
     if (mode === 'card-to-position') {
       if (!numStr) return;
-      userAnswer = numStr;
-      correct = Number(numStr) === position;
+      recordAttempt(numStr, Number(numStr) === position);
     } else {
       if (!rank || !suit) return;
-      userAnswer = `${rank}${suit}`;
-      correct = userAnswer === card.code;
+      const userAnswer = `${rank}${suit}`;
+      recordAttempt(userAnswer, userAnswer === card.code);
     }
-    const result: AttemptResult = {
-      code: card.code,
-      position,
-      mode,
-      userAnswer,
-      correct,
-      timeMs,
-      timestamp: Date.now(),
-    };
-    setResults((prev) => [...prev, result]);
-    setLastCorrect(correct);
-    setRevealing(true);
-  }, [revealing, card, mode, numStr, rank, suit, position]);
+  }, [revealing, card, mode, numStr, rank, suit, position, recordAttempt]);
+
+  const submitDontKnow = useCallback(() => {
+    recordAttempt(IDK_ANSWER, false, true);
+  }, [recordAttempt]);
 
   const advance = useCallback(() => {
     const allResults = results;
@@ -194,6 +207,7 @@ function TrainingRunner({
           setQueue((q) => [...q, ...shuffle(missed)]);
           setIdx((i) => i + 1);
           setRevealing(false);
+          setLastWasIdk(false);
           resetInput();
           return;
         }
@@ -212,6 +226,7 @@ function TrainingRunner({
     }
     setIdx((i) => i + 1);
     setRevealing(false);
+    setLastWasIdk(false);
     resetInput();
   }, [results, idx, queue.length, settings.redrillMissed, mode, scopePositions, onFinish, resetInput]);
 
@@ -296,11 +311,22 @@ function TrainingRunner({
               onSubmit={submit}
             />
           )}
+          <button
+            type="button"
+            className="btn ghost idk-btn"
+            onClick={submitDontKnow}
+          >
+            I don&apos;t know
+          </button>
         </>
       ) : (
         <>
           <div className={`feedback ${lastCorrect ? 'good' : 'bad'}`}>
-            {lastCorrect ? 'Correct!' : 'Not quite.'}
+            {lastCorrect
+              ? 'Correct!'
+              : lastWasIdk
+                ? "That's okay — here's the answer:"
+                : 'Not quite.'}
             <div className="reveal">
               <PlayingCard card={card} width={70} />
               <div>

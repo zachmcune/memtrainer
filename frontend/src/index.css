@@ -590,6 +590,14 @@ input[type='text'] {
   font-size: 13px;
 }
 
+.idk-btn {
+  width: 100%;
+  max-width: 360px;
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
 .banner {
   background: var(--bg-elev-2);
   border: 1px solid var(--border);

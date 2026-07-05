@@ -69,7 +69,10 @@ export function SessionSummary({ results }: { results: AttemptResult[] }) {
                   <div className="title">
                     #{m.position} · {cardLabel(card)}
                   </div>
-                  <div className="sub">You answered: {m.userAnswer || '—'}</div>
+                  <div className="sub">
+                    You answered:{' '}
+                    {m.userAnswer === '—' ? "I don't know" : m.userAnswer || '—'}
+                  </div>
                 </div>
               </div>
             );
