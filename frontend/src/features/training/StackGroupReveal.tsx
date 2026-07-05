@@ -8,8 +8,8 @@ interface StackGroupRevealProps {
 }
 
 /**
- * On a miss, shows a run of four consecutive stack cards that includes the
- * quizzed card — e.g. for 2H at #2: 4C, 2H, 7D, 3C.
+ * On a miss, shows the fixed group of four stack cards the quizzed position
+ * belongs to — e.g. positions 1–4: 4C, 2H, 7D, 3C.
  */
 export function StackGroupReveal({ position, card }: StackGroupRevealProps) {
   const positions = stackGroupPositions(position);

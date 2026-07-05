@@ -31,8 +31,8 @@ export function cardAtPosition(position: number): Card {
   return card;
 }
 
-/** Four consecutive stack positions surrounding a miss (for context on wrong answers). */
+/** Fixed stack group of four containing the missed position (1–4, 5–8, …, 49–52). */
 export function stackGroupPositions(position: number): number[] {
-  const start = Math.max(1, Math.min(position - 1, DECK_SIZE - 3));
+  const start = Math.floor((position - 1) / 4) * 4 + 1;
   return [start, start + 1, start + 2, start + 3];
 }

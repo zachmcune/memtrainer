@@ -98,8 +98,8 @@ export function SettingsPage() {
         <div>
           <div>Show stack group of four on miss</div>
           <div className="muted">
-            When you miss, show four consecutive stack cards around the answer (e.g. #1–#4 for
-            2♥).
+            When you miss, show the group of four the answer belongs to (e.g. #1–#4 for positions
+            1–4, #5–#8 for positions 5–8).
           </div>
         </div>
         <Switch
