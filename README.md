@@ -39,9 +39,11 @@ npm run test       # core logic self-tests
 1. Push this repo to GitHub and rename it to **`memtrainer`** (Settings → General →
    Repository name).
 2. Make the repo **public** if it isn’t already (required for free GitHub Pages).
-3. In the repo: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-4. Merge to `main`. The included workflow (`.github/workflows/deploy-pages.yml`) builds
-   and deploys automatically.
+3. Merge to `main`. The workflow builds the PWA and publishes it to the **`gh-pages`**
+   branch. It also tries to set **Settings → Pages → Deploy from branch → `gh-pages` /
+   (root)** automatically.
+4. If the live URL still shows this README instead of the app, set that Pages source
+   manually once (see below).
 
 Live URL (after deploy):
 
@@ -49,6 +51,25 @@ Live URL (after deploy):
 
 If your repo name differs, update `VITE_BASE_PATH` in the workflow to
 `/<your-repo-name>/` (must start and end with `/`).
+
+### Site shows the README instead of the app?
+
+GitHub Pages was probably serving the `main` branch through Jekyll (this file). Fix:
+
+**Settings → Pages → Build and deployment → Source → Deploy from a branch → Branch:
+`gh-pages` / Folder: `/ (root)`**
+
+Then open the live URL in a private/incognito tab — you should see the trainer UI, not
+this readme.
+
+### Installed app not showing new features?
+
+The Home Screen icon caches the old build. After the site above is fixed:
+
+1. Open the live URL in Safari/Chrome (not the home-screen icon).
+2. Go to **Settings → About → Check for updates**, or use the update banner if shown.
+3. If needed: remove the home-screen icon, reopen the site in the browser, and **Add to
+   Home Screen** again. Your stats stay on the device.
 
 ### Other free hosts
 
