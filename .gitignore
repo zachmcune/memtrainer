@@ -11,5 +11,4 @@ yarn-error.log*
 coverage/
 .vite/
 frontend/dev-dist/
-backend/prisma/dev.db
 *.tsbuildinfo

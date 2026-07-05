@@ -1,32 +1,19 @@
 import { useState } from 'react';
 import { repository } from '../../db/repository';
-import { browserTimezone } from '../../db/defaults';
 import { TRAINING_MODES, type ScopeType } from '../../db/types';
 import { useSettings } from '../../state/SettingsContext';
 import { computeChunks, resolveScopePositions } from '../training/engine';
-import {
-  disableReminders,
-  enableReminders,
-  isIos,
-  isPushSupported,
-  isStandalone,
-  sendTestNotification,
-  updateReminders,
-} from '../../pwa/push';
 
 const SESSION_LENGTHS: (number | 'all')[] = ['all', 10, 20, 30, 52];
 
 export function SettingsPage() {
   const { settings, update, loading } = useSettings();
-  const [reminderBusy, setReminderBusy] = useState(false);
-  const [reminderMsg, setReminderMsg] = useState<string | null>(null);
-  const [reminderErr, setReminderErr] = useState<string | null>(null);
+  const [resetMsg, setResetMsg] = useState<string | null>(null);
 
   if (loading) return <div className="empty">Loading…</div>;
 
   const chunks = computeChunks(settings.scope.chunkSize);
   const scopeCount = resolveScopePositions(settings.scope).length;
-  const pushSupported = isPushSupported();
 
   const setScopeType = (type: ScopeType) =>
     update({ scope: { ...settings.scope, type } });
@@ -38,52 +25,10 @@ export function SettingsPage() {
     update({ scope: { ...settings.scope, selectedChunks: [...selected].sort((a, b) => a - b) } });
   };
 
-  async function handleToggleReminders(next: boolean) {
-    setReminderErr(null);
-    setReminderMsg(null);
-    setReminderBusy(true);
-    try {
-      const tz = browserTimezone();
-      if (next) {
-        const endpoint = await enableReminders({
-          reminderTime: settings.reminderTime,
-          timezone: tz,
-          enabled: true,
-        });
-        await update({ reminderEnabled: true, timezone: tz, pushEndpoint: endpoint });
-        setReminderMsg(`Daily reminder set for ${settings.reminderTime}.`);
-      } else {
-        if (settings.pushEndpoint) await disableReminders(settings.pushEndpoint);
-        await update({ reminderEnabled: false, pushEndpoint: undefined });
-        setReminderMsg('Reminders turned off.');
-      }
-    } catch (e) {
-      setReminderErr(e instanceof Error ? e.message : 'Something went wrong.');
-    } finally {
-      setReminderBusy(false);
-    }
-  }
-
-  async function handleTimeChange(time: string) {
-    await update({ reminderTime: time });
-    if (settings.reminderEnabled && settings.pushEndpoint) {
-      try {
-        await updateReminders(settings.pushEndpoint, {
-          reminderTime: time,
-          timezone: browserTimezone(),
-          enabled: true,
-        });
-        setReminderMsg(`Daily reminder updated to ${time}.`);
-      } catch (e) {
-        setReminderErr(e instanceof Error ? e.message : 'Could not update time.');
-      }
-    }
-  }
-
   async function handleReset() {
     if (confirm('Erase all sessions and card stats? This cannot be undone.')) {
       await repository.clearAll();
-      setReminderMsg('Stats cleared.');
+      setResetMsg('Stats cleared.');
     }
   }
 
@@ -226,66 +171,15 @@ export function SettingsPage() {
         />
       </div>
 
-      <h2>Daily reminder</h2>
-      {!pushSupported ? (
-        <div className="banner">
-          This browser doesn&apos;t support push notifications. Reminders are available in
-          Chrome, Firefox, Edge, and Safari (iOS 16.4+ after adding to your Home Screen).
-        </div>
-      ) : (
-        <>
-          {isIos() && !isStandalone() && (
-            <div className="banner warn">
-              To receive reminders on iPhone/iPad: tap the Share icon in Safari, choose
-              &ldquo;Add to Home Screen&rdquo;, then open the app from that icon and enable
-              reminders here.
-            </div>
-          )}
-          <div className="toggle-row">
-            <div>
-              <div>Remind me to practice</div>
-              <div className="muted">A daily push notification at your chosen time.</div>
-            </div>
-            <Switch
-              checked={settings.reminderEnabled}
-              disabled={reminderBusy}
-              onChange={handleToggleReminders}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="reminderTime">Reminder time</label>
-            <input
-              id="reminderTime"
-              type="time"
-              value={settings.reminderTime}
-              onChange={(e) => handleTimeChange(e.target.value)}
-            />
-          </div>
-          {settings.reminderEnabled && (
-            <button
-              className="btn ghost block"
-              onClick={() => sendTestNotification().catch(() => undefined)}
-            >
-              Send a test notification
-            </button>
-          )}
-          {reminderMsg && (
-            <div className="feedback good" style={{ marginTop: 10 }}>
-              {reminderMsg}
-            </div>
-          )}
-          {reminderErr && (
-            <div className="feedback bad" style={{ marginTop: 10 }}>
-              {reminderErr}
-            </div>
-          )}
-        </>
-      )}
-
       <h2>Data</h2>
       <button className="btn danger block" onClick={handleReset}>
         Reset all stats
       </button>
+      {resetMsg && (
+        <div className="feedback good" style={{ marginTop: 10 }}>
+          {resetMsg}
+        </div>
+      )}
       <p className="muted center" style={{ marginTop: 24 }}>
         Mnemonica Trainer · your progress is stored on this device.
       </p>
@@ -296,18 +190,15 @@ export function SettingsPage() {
 function Switch({
   checked,
   onChange,
-  disabled,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
-  disabled?: boolean;
 }) {
   return (
     <label className="switch">
       <input
         type="checkbox"
         checked={checked}
-        disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
       />
       <span className="track" />

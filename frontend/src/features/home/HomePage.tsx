@@ -5,7 +5,7 @@ import { TRAINING_MODES } from '../../db/types';
 import { useSettings } from '../../state/SettingsContext';
 import { resolveScopePositions } from '../training/engine';
 import { accuracyColor, computeStreak, summarizeHistory } from '../stats/compute';
-import { isIos, isStandalone } from '../../pwa/push';
+import { isIos, isStandalone } from '../../pwa/install';
 
 export function HomePage() {
   const { settings } = useSettings();
@@ -28,7 +28,7 @@ export function HomePage() {
       {showInstallHint && (
         <div className="banner">
           Install the app: tap the Share icon, then &ldquo;Add to Home Screen&rdquo; to run
-          it full screen and enable daily reminders.
+          it full screen like a native app.
         </div>
       )}
 
