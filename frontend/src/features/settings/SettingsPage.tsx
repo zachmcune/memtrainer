@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { ScopeControls } from '../../components/ScopeControls';
 import { repository } from '../../db/repository';
-import { TRAINING_MODES, type ScopeType } from '../../db/types';
+import { TRAINING_MODES } from '../../db/types';
 import { useSettings } from '../../state/SettingsContext';
-import { computeChunks, resolveScopePositions } from '../training/engine';
+import { resolveScopePositions } from '../training/engine';
 
 const SESSION_LENGTHS: (number | 'all')[] = ['all', 10, 20, 30, 52];
 
@@ -12,18 +13,7 @@ export function SettingsPage() {
 
   if (loading) return <div className="empty">Loading…</div>;
 
-  const chunks = computeChunks(settings.scope.chunkSize);
   const scopeCount = resolveScopePositions(settings.scope).length;
-
-  const setScopeType = (type: ScopeType) =>
-    update({ scope: { ...settings.scope, type } });
-
-  const toggleChunk = (index: number) => {
-    const selected = new Set(settings.scope.selectedChunks);
-    if (selected.has(index)) selected.delete(index);
-    else selected.add(index);
-    update({ scope: { ...settings.scope, selectedChunks: [...selected].sort((a, b) => a - b) } });
-  };
 
   async function handleReset() {
     if (confirm('Erase all sessions and card stats? This cannot be undone.')) {
@@ -54,89 +44,11 @@ export function SettingsPage() {
       </p>
 
       <h2>Study scope</h2>
-      <div className="seg">
-        {(['all', 'chunks', 'range'] as ScopeType[]).map((t) => (
-          <button
-            key={t}
-            className={settings.scope.type === t ? 'active' : ''}
-            onClick={() => setScopeType(t)}
-          >
-            {t === 'all' ? 'Full deck' : t === 'chunks' ? 'Sections' : 'Range'}
-          </button>
-        ))}
-      </div>
-
-      {settings.scope.type === 'chunks' && (
-        <div className="card-panel" style={{ marginTop: 12 }}>
-          <div className="field">
-            <label htmlFor="chunkSize">Section size</label>
-            <select
-              id="chunkSize"
-              value={settings.scope.chunkSize}
-              onChange={(e) =>
-                update({
-                  scope: {
-                    ...settings.scope,
-                    chunkSize: Number(e.target.value),
-                    selectedChunks: [0],
-                  },
-                })
-              }
-            >
-              {[4, 5, 7, 10, 13, 17, 26].map((n) => (
-                <option key={n} value={n}>
-                  {n} cards per section
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="chunk-grid">
-            {chunks.map((c) => (
-              <button
-                key={c.index}
-                className={`chunk-cell ${settings.scope.selectedChunks.includes(c.index) ? 'selected' : ''}`}
-                onClick={() => toggleChunk(c.index)}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {settings.scope.type === 'range' && (
-        <div className="card-panel" style={{ marginTop: 12 }}>
-          <div className="row" style={{ gap: 12 }}>
-            <div className="field" style={{ flex: 1 }}>
-              <label htmlFor="rangeStart">From position</label>
-              <input
-                id="rangeStart"
-                type="number"
-                min={1}
-                max={52}
-                value={settings.scope.rangeStart}
-                onChange={(e) =>
-                  update({ scope: { ...settings.scope, rangeStart: Number(e.target.value) } })
-                }
-              />
-            </div>
-            <div className="field" style={{ flex: 1 }}>
-              <label htmlFor="rangeEnd">To position</label>
-              <input
-                id="rangeEnd"
-                type="number"
-                min={1}
-                max={52}
-                value={settings.scope.rangeEnd}
-                onChange={(e) =>
-                  update({ scope: { ...settings.scope, rangeEnd: Number(e.target.value) } })
-                }
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
+      <ScopeControls
+        scope={settings.scope}
+        onChange={(scope) => update({ scope })}
+        idPrefix="train-"
+      />
       <p className="muted" style={{ marginTop: 8 }}>
         {scopeCount} card{scopeCount === 1 ? '' : 's'} currently in scope.
       </p>

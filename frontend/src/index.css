@@ -788,3 +788,22 @@ input[type='text'] {
   color: var(--text-dim);
   text-align: center;
 }
+
+.deck-scope-heading {
+  margin-top: 4px;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.scope-panel {
+  margin-top: 12px;
+}
+
+.deck-scope-count {
+  margin: 8px 0 4px;
+  text-align: center;
+}
+
+.deck-empty {
+  margin-top: 12px;
+}

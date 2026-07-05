@@ -24,7 +24,15 @@ class DexieStatsRepository implements StatsRepository {
     const existing = await db.settings.get('app');
     if (existing) {
       // Merge to pick up any newly-added default fields.
-      return { ...DEFAULT_SETTINGS, ...existing, scope: { ...DEFAULT_SETTINGS.scope, ...existing.scope } };
+      return {
+        ...DEFAULT_SETTINGS,
+        ...existing,
+        scope: { ...DEFAULT_SETTINGS.scope, ...existing.scope },
+        stackScope: {
+          ...DEFAULT_SETTINGS.stackScope,
+          ...(existing.stackScope ?? DEFAULT_SETTINGS.stackScope),
+        },
+      };
     }
     await db.settings.put(DEFAULT_SETTINGS);
     return DEFAULT_SETTINGS;
