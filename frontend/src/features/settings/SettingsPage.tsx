@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ScopeControls } from '../../components/ScopeControls';
 import { repository } from '../../db/repository';
-import { TRAINING_MODES } from '../../db/types';
+import { QUEUE_STRATEGIES, TRAINING_MODES } from '../../db/types';
 import { usePwaUpdate } from '../../pwa/UpdateContext';
 import { useSettings } from '../../state/SettingsContext';
 import { formatBuildDate, formatVersion } from '../../version';
@@ -60,6 +60,22 @@ export function SettingsPage() {
       </div>
       <p className="muted" style={{ marginTop: 8 }}>
         {TRAINING_MODES.find((m) => m.value === settings.mode)!.help}
+      </p>
+
+      <h2>Queue</h2>
+      <div className="seg" role="tablist">
+        {QUEUE_STRATEGIES.map((s) => (
+          <button
+            key={s.value}
+            className={settings.queueStrategy === s.value ? 'active' : ''}
+            onClick={() => update({ queueStrategy: s.value })}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+      <p className="muted" style={{ marginTop: 8 }}>
+        {QUEUE_STRATEGIES.find((s) => s.value === settings.queueStrategy)!.help}
       </p>
 
       <h2>Study scope</h2>

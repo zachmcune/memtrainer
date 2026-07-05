@@ -1,5 +1,8 @@
 export type TrainingMode = 'card-to-position' | 'position-to-card';
 
+/** How the training session picks which cards to prompt next. */
+export type QueueStrategy = 'random' | 'dynamic';
+
 export const TRAINING_MODES: { value: TrainingMode; label: string; help: string }[] = [
   {
     value: 'card-to-position',
@@ -10,6 +13,19 @@ export const TRAINING_MODES: { value: TrainingMode; label: string; help: string 
     value: 'position-to-card',
     label: 'Position \u2192 Card',
     help: 'See a stack number, enter the card.',
+  },
+];
+
+export const QUEUE_STRATEGIES: { value: QueueStrategy; label: string; help: string }[] = [
+  {
+    value: 'random',
+    label: 'Random',
+    help: 'Shuffled cards from your study scope.',
+  },
+  {
+    value: 'dynamic',
+    label: 'Dynamic',
+    help: 'Prioritize weak cards and sections you miss most often.',
   },
 ];
 
@@ -48,6 +64,8 @@ export interface AppSettings {
   stackScope: ScopeConfig;
   /** Number of prompts per session, or 'all' to cover the whole scope once. */
   sessionLength: number | 'all';
+  /** How cards are ordered in a session. */
+  queueStrategy: QueueStrategy;
   redrillMissed: boolean;
   /** On a miss, show the cards before/after the quizzed card in stack order. */
   showStackNeighborsOnMiss: boolean;

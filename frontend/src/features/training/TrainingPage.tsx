@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
 import { PlayingCard } from '../../components/PlayingCard';
 import { cardLabel, type Rank, type Suit } from '../../data/deck';
 import { cardAtPosition } from '../../data/mnemonica';
+import { db } from '../../db/db';
 import { repository } from '../../db/repository';
-import { TRAINING_MODES, type AttemptResult, type SessionRecord } from '../../db/types';
+import { QUEUE_STRATEGIES, TRAINING_MODES, type AttemptResult, type SessionRecord } from '../../db/types';
 import { useSettings } from '../../state/SettingsContext';
 import { SessionSummary } from '../stats/SessionSummary';
-import { buildQueue, resolveScopePositions, shuffle } from './engine';
+import { buildSessionQueue, resolveScopePositions, shuffle } from './engine';
 import { CardPicker, NumberPad } from './inputs';
 import { StackNeighborReveal } from './StackNeighborReveal';
 import { StackGroupReveal } from './StackGroupReveal';
@@ -72,6 +74,7 @@ export function TrainingPage() {
   }
 
   const modeInfo = TRAINING_MODES.find((m) => m.value === settings.mode)!;
+  const queueInfo = QUEUE_STRATEGIES.find((s) => s.value === settings.queueStrategy)!;
   return (
     <div>
       <h1>Train</h1>
@@ -80,6 +83,10 @@ export function TrainingPage() {
         <div className="row spread">
           <span className="muted">Mode</span>
           <span className="pill">{modeInfo.label}</span>
+        </div>
+        <div className="row spread" style={{ marginTop: 10 }}>
+          <span className="muted">Queue</span>
+          <span className="pill">{queueInfo.label}</span>
         </div>
         <div className="row spread" style={{ marginTop: 10 }}>
           <span className="muted">In scope</span>
@@ -125,14 +132,26 @@ function TrainingRunner({
 }) {
   const { settings } = useSettings();
   const mode = settings.mode;
+  const cardStats = useLiveQuery(() => db.cardStats.toArray(), [], undefined);
 
   const scopePositions = useMemo(
     () => resolveScopePositions(settings.scope),
     [settings.scope],
   );
-  const [queue, setQueue] = useState<number[]>(() =>
-    buildQueue(scopePositions, settings.sessionLength),
-  );
+
+  const initialQueue = useMemo(() => {
+    if (cardStats === undefined) return null;
+    return buildSessionQueue(
+      scopePositions,
+      settings.sessionLength,
+      settings.queueStrategy,
+      cardStats,
+      mode,
+    );
+  }, [cardStats, scopePositions, settings.sessionLength, settings.queueStrategy, mode]);
+
+  const [queue, setQueue] = useState<number[]>([]);
+  const queueReadyRef = useRef(false);
   const [idx, setIdx] = useState(0);
   const [results, setResults] = useState<AttemptResult[]>([]);
   const [revealing, setRevealing] = useState(false);
@@ -144,6 +163,13 @@ function TrainingRunner({
   const redrilledRef = useRef(false);
   const startRef = useRef<number>(performance.now());
   const startedAtRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    if (initialQueue && !queueReadyRef.current) {
+      queueReadyRef.current = true;
+      setQueue(initialQueue);
+    }
+  }, [initialQueue]);
 
   const position = queue[idx];
   const card = position ? cardAtPosition(position) : null;
@@ -253,6 +279,10 @@ function TrainingRunner({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [revealing, advance, submit, mode]);
+
+  if (cardStats === undefined || !queueReadyRef.current || queue.length === 0) {
+    return <div className="empty">Preparing session…</div>;
+  }
 
   if (!card) {
     return <div className="empty">Nothing to train.</div>;

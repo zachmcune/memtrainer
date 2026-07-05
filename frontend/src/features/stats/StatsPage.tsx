@@ -1,11 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/db';
-import { PlayingCard } from '../../components/PlayingCard';
-import { cardLabel, parseCard } from '../../data/deck';
 import { TRAINING_MODES } from '../../db/types';
-import { accuracyColor, formatMs, summarizeHistory } from './compute';
+import { useSettings } from '../../state/SettingsContext';
+import { accuracyColor, rankCardStats, summarizeHistory } from './compute';
+import { CardLeaderboard } from './CardLeaderboard';
 
 export function StatsPage() {
+  const { settings } = useSettings();
   const sessions = useLiveQuery(() => db.sessions.toArray(), [], undefined);
   const cardStats = useLiveQuery(() => db.cardStats.toArray(), [], undefined);
 
@@ -27,11 +28,13 @@ export function StatsPage() {
   const h = summarizeHistory(sessions, cardStats);
   const trend = h.trend.slice(-20);
   const maxTrend = Math.max(...trend.map((t) => t.accuracy), 0.01);
+  const modeInfo = TRAINING_MODES.find((m) => m.value === settings.mode)!;
+  const ranked = rankCardStats(cardStats, settings.mode);
 
   return (
     <div>
       <h1>Stats</h1>
-      <p className="subtitle">Spot the cards costing you the most.</p>
+      <p className="subtitle">See your strongest cards and where to focus next.</p>
 
       <div className="stat-grid">
         <div className="stat-tile">
@@ -78,35 +81,11 @@ export function StatsPage() {
         </>
       )}
 
-      <h2>Cards to focus on</h2>
-      {h.weakest.length === 0 ? (
-        <div className="card-panel center muted">Not enough data yet.</div>
-      ) : (
-        <div className="miss-list">
-          {h.weakest.map((w) => {
-            const card = parseCard(w.code);
-            const modeLabel = TRAINING_MODES.find((m) => m.value === w.mode)?.label ?? w.mode;
-            return (
-              <div className="miss-item" key={w.mode + w.code}>
-                <PlayingCard card={card} width={44} />
-                <div className="meta">
-                  <div className="title">
-                    #{w.position} · {cardLabel(card)}
-                  </div>
-                  <div className="sub">
-                    {modeLabel} · {w.correct}/{w.attempts} right · avg {formatMs(w.avgTimeMs)}
-                  </div>
-                </div>
-                <div
-                  style={{ fontWeight: 800, color: accuracyColor(w.accuracy) }}
-                >
-                  {Math.round(w.accuracy * 100)}%
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <h2>Card leaderboard</h2>
+      <p className="muted" style={{ marginTop: -4, marginBottom: 10 }}>
+        {modeInfo.label} · best to worst · {ranked.length} card{ranked.length === 1 ? '' : 's'}
+      </p>
+      <CardLeaderboard cards={ranked} />
     </div>
   );
 }
