@@ -11,9 +11,13 @@ assert.equal(positionOf('9D'), 52);
 assert.equal(cardAtPosition(7).code, 'AS');
 assert.equal(cardAtPosition(52).code, '9D');
 
-// Stack group window (four consecutive cards on a miss)
-assert.deepEqual(stackGroupPositions(2), [1, 2, 3, 4]);
+// Fixed stack groups of four (1–4, 5–8, …, 49–52)
 assert.deepEqual(stackGroupPositions(1), [1, 2, 3, 4]);
+assert.deepEqual(stackGroupPositions(2), [1, 2, 3, 4]);
+assert.deepEqual(stackGroupPositions(4), [1, 2, 3, 4]);
+assert.deepEqual(stackGroupPositions(5), [5, 6, 7, 8]);
+assert.deepEqual(stackGroupPositions(7), [5, 6, 7, 8]);
+assert.deepEqual(stackGroupPositions(13), [13, 14, 15, 16]);
 assert.deepEqual(stackGroupPositions(52), [49, 50, 51, 52]);
 
 // Chunks
