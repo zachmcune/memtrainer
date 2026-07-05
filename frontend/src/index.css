@@ -707,6 +707,23 @@ input[type='text'] {
   color: var(--accent-strong);
 }
 
+.version-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.version-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.version-status-warn {
+  color: var(--warn);
+}
+
 .center {
   text-align: center;
 }

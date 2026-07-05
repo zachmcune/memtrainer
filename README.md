@@ -57,6 +57,16 @@ The build output is plain static files in `frontend/dist`. You can also deploy t
 publish directory to `frontend/dist`. For a root domain (not a subpath), omit
 `VITE_BASE_PATH` (defaults to `/`).
 
+## Versioning
+
+The app version comes from `frontend/package.json` (`version` field). Each production
+build also gets a short git commit id (e.g. `v1.0.0 (a2626d2)`).
+
+- **Settings → About** shows the installed version, latest online version, and update status.
+- Bump `frontend/package.json` when you ship a meaningful release; every merge to `main`
+  gets a unique build id even if the semver stays the same.
+- The update banner appears when your installed build is behind the live site.
+
 ## Installing on your phone
 
 - **Android (Chrome):** open the site → menu → _Add to Home screen_ / _Install app_.

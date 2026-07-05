@@ -2,13 +2,24 @@ import { useState } from 'react';
 import { ScopeControls } from '../../components/ScopeControls';
 import { repository } from '../../db/repository';
 import { TRAINING_MODES } from '../../db/types';
+import { usePwaUpdate } from '../../pwa/UpdateContext';
 import { useSettings } from '../../state/SettingsContext';
+import { formatBuildDate, formatVersion } from '../../version';
 import { resolveScopePositions } from '../training/engine';
 
 const SESSION_LENGTHS: (number | 'all')[] = ['all', 10, 20, 30, 52];
 
 export function SettingsPage() {
   const { settings, update, loading } = useSettings();
+  const {
+    currentVersion,
+    latestVersion,
+    updateAvailable,
+    isUpToDate,
+    checking,
+    applyUpdate,
+    checkForUpdates,
+  } = usePwaUpdate();
   const [resetMsg, setResetMsg] = useState<string | null>(null);
 
   if (loading) return <div className="empty">Loading…</div>;
@@ -21,6 +32,14 @@ export function SettingsPage() {
       setResetMsg('Stats cleared.');
     }
   }
+
+  const statusLabel = updateAvailable
+    ? 'Update available'
+    : isUpToDate
+      ? 'Up to date'
+      : checking
+        ? 'Checking…'
+        : 'Unknown';
 
   return (
     <div>
@@ -117,6 +136,39 @@ export function SettingsPage() {
           {resetMsg}
         </div>
       )}
+
+      <h2>About</h2>
+      <div className="card-panel version-panel">
+        <div className="version-row">
+          <span className="muted">Installed</span>
+          <span>{formatVersion(currentVersion)}</span>
+        </div>
+        <div className="version-row">
+          <span className="muted">Built</span>
+          <span>{formatBuildDate(currentVersion.builtAt)}</span>
+        </div>
+        {latestVersion && (
+          <div className="version-row">
+            <span className="muted">Latest online</span>
+            <span>{formatVersion(latestVersion)}</span>
+          </div>
+        )}
+        <div className="version-row">
+          <span className="muted">Status</span>
+          <span className={updateAvailable ? 'version-status-warn' : undefined}>{statusLabel}</span>
+        </div>
+        <div className="row" style={{ marginTop: 12, gap: 8 }}>
+          <button className="btn block" onClick={() => void checkForUpdates()} disabled={checking}>
+            {checking ? 'Checking…' : 'Check for updates'}
+          </button>
+          {updateAvailable && (
+            <button className="btn primary block" onClick={applyUpdate}>
+              Update now
+            </button>
+          )}
+        </div>
+      </div>
+
       <p className="muted center" style={{ marginTop: 24 }}>
         Mnemonica Trainer · your progress is stored on this device.
       </p>

@@ -1,12 +1,24 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 /** Set to your repo name for GitHub Pages, e.g. "/memtrainer/". Defaults to "/". */
 const base = process.env.VITE_BASE_PATH || '/';
+const pkg = JSON.parse(
+  readFileSync(resolve(__dirname, 'package.json'), 'utf8'),
+) as { version: string };
+const appBuild = process.env.VITE_BUILD_SHA?.slice(0, 7) ?? 'dev';
+const appBuiltAt = process.env.VITE_BUILD_TIME ?? new Date().toISOString();
 
 export default defineConfig({
   base,
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version),
+    'import.meta.env.VITE_APP_BUILD': JSON.stringify(appBuild),
+    'import.meta.env.VITE_APP_BUILT_AT': JSON.stringify(appBuiltAt),
+  },
   plugins: [
     react(),
     VitePWA({
@@ -22,6 +34,7 @@ export default defineConfig({
       },
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest,woff2}'],
+        globIgnores: ['**/version.json'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
       manifest: {
