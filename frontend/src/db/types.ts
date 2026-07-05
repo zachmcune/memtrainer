@@ -44,6 +44,8 @@ export interface AppSettings {
   id: 'app';
   mode: TrainingMode;
   scope: ScopeConfig;
+  /** Cards visible in the Stack tab carousel (independent from training scope). */
+  stackScope: ScopeConfig;
   /** Number of prompts per session, or 'all' to cover the whole scope once. */
   sessionLength: number | 'all';
   redrillMissed: boolean;
