@@ -1,0 +1,21 @@
+{
+  "name": "mnemonica-trainer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Installable PWA to train the Mnemonica stacked-deck order (card<->position drills, stats, and daily push reminders).",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace backend & npm run dev --workspace frontend",
+    "build": "npm run build --workspace frontend && npm run build --workspace backend",
+    "start": "npm run start --workspace backend",
+    "postinstall": "npm run prisma:generate --workspace backend || true",
+    "lint": "npm run lint --workspace frontend",
+    "generate-vapid": "node backend/scripts/generate-vapid.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

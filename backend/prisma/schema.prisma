@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Anonymous Web Push subscription plus the user's daily reminder preferences.
+/// `userId` is intentionally nullable so a future accounts layer can associate
+/// existing anonymous subscriptions with a User without a data migration.
+model PushSubscription {
+  id           String   @id @default(cuid())
+  endpoint     String   @unique
+  p256dh       String
+  auth         String
+  /// Daily reminder time in 24h "HH:mm" form, interpreted in `timezone`.
+  reminderTime String   @default("18:00")
+  /// IANA timezone captured from the browser, e.g. "America/New_York".
+  timezone     String   @default("UTC")
+  enabled      Boolean  @default(true)
+  /// Last calendar day (YYYY-MM-DD in the subscription's tz) a reminder was sent,
+  /// used to guarantee at-most-once delivery per day.
+  lastSentDay  String?
+  userId       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([enabled])
+  @@index([userId])
+}
