@@ -333,6 +333,61 @@ input[type='text'] {
   flex-direction: column;
   align-items: center;
   gap: 18px;
+  position: relative;
+  width: 100%;
+}
+
+.trainer-paused .prompt-area,
+.trainer-paused .keypad,
+.trainer-paused .answer-input,
+.trainer-paused .feedback {
+  opacity: 0.35;
+}
+
+.pause-overlay {
+  position: absolute;
+  inset: 48px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  z-index: 5;
+}
+
+.pause-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.pause-note {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.training-resume-banner {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: 14px;
+  border-color: var(--accent);
+}
+
+.inputs-disabled {
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.pill.active {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: #04283a;
 }
 
 .progress-bar {
