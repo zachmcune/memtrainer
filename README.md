@@ -40,6 +40,8 @@ npm run test       # core logic self-tests
    Repository name).
 2. Make the repo **public** if it isn’t already (required for free GitHub Pages).
 3. In the repo: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+   If it still says **Deploy from a branch**, switch it — running both causes intermittent
+   deploy failures.
 4. Merge to `main`. The included workflow (`.github/workflows/deploy-pages.yml`) builds
    and deploys automatically.
 
@@ -49,6 +51,20 @@ Live URL (after deploy):
 
 If your repo name differs, update `VITE_BASE_PATH` in the workflow to
 `/<your-repo-name>/` (must start and end with `/`).
+
+### Deploy failed in GitHub Actions?
+
+You may see two checks on each push (`Deploy to GitHub Pages` and
+`pages build and deployment`). Both build successfully, but the deploy step can
+occasionally fail with **"Deployment failed, try again later"** — a transient GitHub
+Pages error.
+
+- Open **Actions**, select the failed run, and click **Re-run all jobs**, or
+- Push any commit to `main` to trigger a fresh deploy.
+
+Your stats in the installed app are unaffected; this only updates the hosted files.
+If deploys keep failing, confirm step 3 above (Pages source must be **GitHub Actions**,
+not **Deploy from a branch**).
 
 ### Other free hosts
 
