@@ -1,19 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { registerSW } from 'virtual:pwa-register';
 import App from './App';
+import { UpdateProvider } from './pwa/UpdateContext';
 import { SettingsProvider } from './state/SettingsContext';
 import './index.css';
-
-registerSW({ immediate: true });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <SettingsProvider>
-        <App />
-      </SettingsProvider>
+      <UpdateProvider>
+        <SettingsProvider>
+          <App />
+        </SettingsProvider>
+      </UpdateProvider>
     </BrowserRouter>
   </React.StrictMode>,
 );

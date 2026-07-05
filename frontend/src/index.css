@@ -679,6 +679,34 @@ input[type='text'] {
   border-color: var(--warn);
 }
 
+.update-banner {
+  margin-bottom: 16px;
+}
+
+.update-banner-text {
+  margin: 0;
+}
+
+.update-banner-note {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.update-link {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.update-link:active {
+  color: var(--accent-strong);
+}
+
 .center {
   text-align: center;
 }
