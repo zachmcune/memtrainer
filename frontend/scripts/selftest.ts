@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { computeChunks, resolveScopePositions, buildQueue } from '../src/features/training/engine';
-import { positionOf, cardAtPosition, DECK_SIZE } from '../src/data/mnemonica';
+import { positionOf, cardAtPosition, DECK_SIZE, stackGroupPositions } from '../src/data/mnemonica';
 import { summarizeSession, computeStreak } from '../src/features/stats/compute';
 import type { AttemptResult, ScopeConfig, SessionRecord } from '../src/db/types';
 
@@ -10,6 +10,11 @@ assert.equal(positionOf('4C'), 1);
 assert.equal(positionOf('9D'), 52);
 assert.equal(cardAtPosition(7).code, 'AS');
 assert.equal(cardAtPosition(52).code, '9D');
+
+// Stack group window (four consecutive cards on a miss)
+assert.deepEqual(stackGroupPositions(2), [1, 2, 3, 4]);
+assert.deepEqual(stackGroupPositions(1), [1, 2, 3, 4]);
+assert.deepEqual(stackGroupPositions(52), [49, 50, 51, 52]);
 
 // Chunks
 const chunks = computeChunks(13);

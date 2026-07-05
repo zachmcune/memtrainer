@@ -10,6 +10,7 @@ import { SessionSummary } from '../stats/SessionSummary';
 import { buildQueue, resolveScopePositions, shuffle } from './engine';
 import { CardPicker, NumberPad } from './inputs';
 import { StackNeighborReveal } from './StackNeighborReveal';
+import { StackGroupReveal } from './StackGroupReveal';
 
 type Phase = 'idle' | 'running' | 'finished';
 
@@ -328,7 +329,9 @@ function TrainingRunner({
               : lastWasIdk
                 ? "That's okay — here's the answer:"
                 : 'Not quite.'}
-            {!lastCorrect && settings.showStackNeighborsOnMiss ? (
+            {!lastCorrect && settings.showStackGroupOnMiss ? (
+              <StackGroupReveal position={position} card={card} />
+            ) : !lastCorrect && settings.showStackNeighborsOnMiss ? (
               <StackNeighborReveal position={position} card={card} />
             ) : (
               <div className="reveal">

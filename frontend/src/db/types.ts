@@ -51,6 +51,8 @@ export interface AppSettings {
   redrillMissed: boolean;
   /** On a miss, show the cards before/after the quizzed card in stack order. */
   showStackNeighborsOnMiss: boolean;
+  /** On a miss, show a run of four consecutive stack cards including the answer. */
+  showStackGroupOnMiss: boolean;
 }
 
 export interface SessionRecord {

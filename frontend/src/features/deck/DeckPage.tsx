@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
-import { ScopeControls } from '../../components/ScopeControls';
+import { CollapsibleScopePanel } from '../../components/CollapsibleScopePanel';
 import { PlayingCard } from '../../components/PlayingCard';
 import { cardLabel } from '../../data/deck';
 import { cardAtPosition } from '../../data/mnemonica';
 import { useSettings } from '../../state/SettingsContext';
 import { resolveScopePositions } from '../training/engine';
 
-const SWIPE_THRESHOLD_PX = 48;
 const VISIBLE_RADIUS = 2;
+const MIN_SWIPE_PX = 36;
 
 function clampIndex(value: number, max: number): number {
   if (max <= 0) return 0;
@@ -39,36 +39,95 @@ export function DeckPage() {
     () => resolveScopePositions(settings.stackScope),
     [settings.stackScope],
   );
+
   const [index, setIndex] = useState(0);
   const [dragPx, setDragPx] = useState(0);
-  const [animating, setAnimating] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [slideAnimating, setSlideAnimating] = useState(false);
+
   const stageRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const indexRef = useRef(0);
+  const positionsRef = useRef<number[]>([]);
+  const stageWidthRef = useRef(320);
   const dragRef = useRef<{ startX: number; pointerId: number } | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const pendingDragPxRef = useRef(0);
+
+  indexRef.current = index;
+  positionsRef.current = positions;
 
   useEffect(() => {
     setIndex((i) => clampIndex(i, positions.length));
   }, [positions]);
 
-  const goTo = useCallback(
-    (next: number) => {
-      setAnimating(true);
-      setIndex(clampIndex(next, positions.length));
-      setDragPx(0);
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const updateWidth = () => {
+      stageWidthRef.current = el.clientWidth || 320;
+    };
+    updateWidth();
+    const ro = new ResizeObserver(updateWidth);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [positions.length]);
+
+  const flushDragPx = useCallback(() => {
+    rafRef.current = null;
+    setDragPx(pendingDragPxRef.current);
+  }, []);
+
+  const scheduleDragPx = useCallback(
+    (px: number) => {
+      pendingDragPxRef.current = px;
+      if (rafRef.current == null) {
+        rafRef.current = requestAnimationFrame(flushDragPx);
+      }
     },
-    [positions.length],
+    [flushDragPx],
   );
 
-  const goPrev = useCallback(() => goTo(index - 1), [goTo, index]);
-  const goNext = useCallback(() => goTo(index + 1), [goTo, index]);
+  useEffect(
+    () => () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    },
+    [],
+  );
+
+  const goTo = useCallback((next: number) => {
+    const clamped = clampIndex(next, positionsRef.current.length);
+    if (clamped === indexRef.current) {
+      setSlideAnimating(true);
+      setDragPx(0);
+      return;
+    }
+    setSlideAnimating(true);
+    setDragPx(0);
+    setIndex(clamped);
+  }, []);
+
+  const goPrev = useCallback(() => goTo(indexRef.current - 1), [goTo]);
+  const goNext = useCallback(() => goTo(indexRef.current + 1), [goTo]);
 
   const finishDrag = useCallback(
     (deltaX: number) => {
-      setAnimating(true);
+      const width = stageWidthRef.current;
+      const threshold = Math.max(MIN_SWIPE_PX, width * 0.14);
+      const cur = indexRef.current;
+      const max = positionsRef.current.length;
+
+      setIsDragging(false);
       setDragPx(0);
-      if (deltaX <= -SWIPE_THRESHOLD_PX) goTo(index + 1);
-      else if (deltaX >= SWIPE_THRESHOLD_PX) goTo(index - 1);
+      setSlideAnimating(true);
+
+      if (deltaX <= -threshold && cur < max - 1) {
+        setIndex(cur + 1);
+      } else if (deltaX >= threshold && cur > 0) {
+        setIndex(cur - 1);
+      }
     },
-    [goTo, index],
+    [],
   );
 
   useEffect(() => {
@@ -81,36 +140,43 @@ export function DeckPage() {
   }, [goPrev, goNext]);
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
-    if (animating || positions.length === 0) return;
+    if (positionsRef.current.length === 0) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
     dragRef.current = { startX: e.clientX, pointerId: e.pointerId };
-    setAnimating(false);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    setIsDragging(true);
+    setSlideAnimating(false);
+    setDragPx(0);
+    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
-    setDragPx(e.clientX - drag.startX);
+    scheduleDragPx(e.clientX - drag.startX);
+  };
+
+  const endDrag = (clientX: number, pointerId: number) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== pointerId) return;
+    dragRef.current = null;
+    finishDrag(clientX - drag.startX);
   };
 
   const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== e.pointerId) return;
-    dragRef.current = null;
-    finishDrag(e.clientX - drag.startX);
+    endDrag(e.clientX, e.pointerId);
   };
 
-  const onPointerCancel = () => {
-    dragRef.current = null;
-    setAnimating(true);
-    setDragPx(0);
+  const onPointerCancel = (e: PointerEvent<HTMLDivElement>) => {
+    endDrag(e.clientX, e.pointerId);
   };
 
   if (loading) return <div className="empty">Loading…</div>;
 
-  const stageWidth = stageRef.current?.clientWidth ?? 320;
+  const stageWidth = stageWidthRef.current;
   const stackPosition = positions[index];
   const card = stackPosition ? cardAtPosition(stackPosition) : null;
+  const useTransition = slideAnimating && !isDragging;
 
   const slots = [];
   if (stackPosition && card) {
@@ -127,11 +193,11 @@ export function DeckPage() {
       <h1>Stack</h1>
       <p className="subtitle">Swipe through cards in Mnemonica order.</p>
 
-      <h2 className="deck-scope-heading">Cards to show</h2>
-      <ScopeControls
+      <CollapsibleScopePanel
         scope={settings.stackScope}
         onChange={(stackScope) => update({ stackScope })}
         idPrefix="stack-"
+        defaultCollapsed
       />
       <p className="muted deck-scope-count">
         {positions.length} card{positions.length === 1 ? '' : 's'} in view
@@ -142,34 +208,34 @@ export function DeckPage() {
 
       {positions.length === 0 ? (
         <div className="card-panel center muted deck-empty">
-          No cards selected. Choose at least one section above.
+          No cards selected. Expand &ldquo;Cards to show&rdquo; above and pick a section.
         </div>
       ) : (
         <>
-          <div
-            ref={stageRef}
-            className="deck-stage"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerCancel}
-            role="region"
-            aria-label="Mnemonica stack carousel"
-            aria-live="polite"
-          >
+          <div ref={stageRef} className="deck-stage">
             <div className="deck-stage-floor" aria-hidden />
-            <div className="deck-carousel">
+            <div
+              ref={carouselRef}
+              className="deck-carousel"
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerCancel}
+              role="region"
+              aria-label="Mnemonica stack carousel"
+              aria-live="polite"
+            >
               {slots.map(({ key, offset, card: slotCard }) => (
                 <div
                   key={key}
                   className={`deck-card-slot${offset === 0 ? ' deck-card-slot-center' : ''}`}
                   style={{
                     ...cardStyle(offset, dragPx, stageWidth),
-                    transition: animating
-                      ? 'transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.42s ease'
+                    transition: useTransition
+                      ? 'transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s ease'
                       : 'none',
                   }}
-                  onTransitionEnd={() => setAnimating(false)}
+                  onTransitionEnd={() => setSlideAnimating(false)}
                 >
                   <PlayingCard card={slotCard} width={offset === 0 ? 210 : 170} />
                 </div>

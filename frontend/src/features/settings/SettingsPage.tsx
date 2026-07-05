@@ -94,6 +94,19 @@ export function SettingsPage() {
           onChange={(v) => update({ showStackNeighborsOnMiss: v })}
         />
       </div>
+      <div className="toggle-row">
+        <div>
+          <div>Show stack group of four on miss</div>
+          <div className="muted">
+            When you miss, show four consecutive stack cards around the answer (e.g. #1–#4 for
+            2♥).
+          </div>
+        </div>
+        <Switch
+          checked={settings.showStackGroupOnMiss}
+          onChange={(v) => update({ showStackGroupOnMiss: v })}
+        />
+      </div>
 
       <h2>Data</h2>
       <button className="btn danger block" onClick={handleReset}>

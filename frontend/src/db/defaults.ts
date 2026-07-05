@@ -9,4 +9,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   sessionLength: 'all',
   redrillMissed: true,
   showStackNeighborsOnMiss: true,
+  showStackGroupOnMiss: false,
 };
