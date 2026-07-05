@@ -183,6 +183,11 @@ export function SettingsPage() {
             </button>
           )}
         </div>
+        <p className="muted" style={{ marginTop: 12, fontSize: 13, lineHeight: 1.5 }}>
+          Still on an old build?{' '}
+          <a href={`${import.meta.env.BASE_URL}reset.html`}>Tap here to refresh the app</a>
+          . Your stats stay on this device.
+        </p>
       </div>
 
       <p className="muted center" style={{ marginTop: 24 }}>
