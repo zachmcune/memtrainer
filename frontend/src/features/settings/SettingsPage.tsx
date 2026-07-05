@@ -170,6 +170,18 @@ export function SettingsPage() {
           onChange={(v) => update({ redrillMissed: v })}
         />
       </div>
+      <div className="toggle-row">
+        <div>
+          <div>Show stack neighbors on miss</div>
+          <div className="muted">
+            When you miss, show the card before and after in the stack flanking the answer.
+          </div>
+        </div>
+        <Switch
+          checked={settings.showStackNeighborsOnMiss}
+          onChange={(v) => update({ showStackNeighborsOnMiss: v })}
+        />
+      </div>
 
       <h2>Data</h2>
       <button className="btn danger block" onClick={handleReset}>

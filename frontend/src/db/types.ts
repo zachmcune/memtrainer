@@ -47,6 +47,8 @@ export interface AppSettings {
   /** Number of prompts per session, or 'all' to cover the whole scope once. */
   sessionLength: number | 'all';
   redrillMissed: boolean;
+  /** On a miss, show the cards before/after the quizzed card in stack order. */
+  showStackNeighborsOnMiss: boolean;
 }
 
 export interface SessionRecord {

@@ -9,6 +9,7 @@ import { useSettings } from '../../state/SettingsContext';
 import { SessionSummary } from '../stats/SessionSummary';
 import { buildQueue, resolveScopePositions, shuffle } from './engine';
 import { CardPicker, NumberPad } from './inputs';
+import { StackNeighborReveal } from './StackNeighborReveal';
 
 type Phase = 'idle' | 'running' | 'finished';
 
@@ -327,13 +328,17 @@ function TrainingRunner({
               : lastWasIdk
                 ? "That's okay — here's the answer:"
                 : 'Not quite.'}
-            <div className="reveal">
-              <PlayingCard card={card} width={70} />
-              <div>
-                <div style={{ fontWeight: 700 }}>#{position}</div>
-                <div className="muted">{cardLabel(card)}</div>
+            {!lastCorrect && settings.showStackNeighborsOnMiss ? (
+              <StackNeighborReveal position={position} card={card} />
+            ) : (
+              <div className="reveal">
+                <PlayingCard card={card} width={70} />
+                <div>
+                  <div style={{ fontWeight: 700 }}>#{position}</div>
+                  <div className="muted">{cardLabel(card)}</div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
           <button className="btn primary block" onClick={advance} style={{ maxWidth: 360 }}>
             {idx >= queue.length - 1 ? 'Finish' : 'Next'}
