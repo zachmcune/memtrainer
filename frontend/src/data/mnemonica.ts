@@ -30,3 +30,9 @@ export function cardAtPosition(position: number): Card {
   if (!card) throw new Error(`Invalid position: ${position}`);
   return card;
 }
+
+/** Four consecutive stack positions surrounding a miss (for context on wrong answers). */
+export function stackGroupPositions(position: number): number[] {
+  const start = Math.max(1, Math.min(position - 1, DECK_SIZE - 3));
+  return [start, start + 1, start + 2, start + 3];
+}

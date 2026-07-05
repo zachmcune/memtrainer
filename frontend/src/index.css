@@ -712,6 +712,12 @@ input[type='text'] {
   perspective: 1100px;
   perspective-origin: 50% 42%;
   transform-style: preserve-3d;
+  cursor: grab;
+  touch-action: none;
+}
+
+.deck-carousel:active {
+  cursor: grabbing;
 }
 
 .deck-card-slot {
@@ -806,4 +812,102 @@ input[type='text'] {
 
 .deck-empty {
   margin-top: 12px;
+}
+
+.scope-details {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  overflow: hidden;
+}
+
+.scope-details-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.scope-details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.scope-details-summary::before {
+  content: '▸';
+  margin-right: 8px;
+  color: var(--accent);
+  transition: transform 0.2s ease;
+  flex: none;
+}
+
+.scope-details[open] .scope-details-summary::before {
+  transform: rotate(90deg);
+}
+
+.scope-details-title {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.scope-details-meta {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+.scope-details-body {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.scope-details-body .seg {
+  margin-top: 12px;
+}
+
+.stack-group {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.stack-group-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.stack-group-slot-center .playing-card {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.stack-group-pos {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.stack-group-slot-center .stack-group-pos {
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.stack-group-name {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.2;
 }
