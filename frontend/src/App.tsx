@@ -1,4 +1,5 @@
 import { NavLink, Route, Routes } from 'react-router-dom';
+import { UpdateBanner } from './components/UpdateBanner';
 import { HomePage } from './features/home/HomePage';
 import { TrainingPage } from './features/training/TrainingPage';
 import { DeckPage } from './features/deck/DeckPage';
@@ -24,6 +25,7 @@ export default function App() {
   return (
     <div className="app-shell">
       <main className="app-main">
+        <UpdateBanner />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/train" element={<TrainingPage />} />
