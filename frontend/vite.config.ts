@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-/** Set to your repo name for GitHub Pages, e.g. "/Mnemonica-Trainer/". Defaults to "/". */
+/** Set to your repo name for GitHub Pages, e.g. "/memtrainer/". Defaults to "/". */
 const base = process.env.VITE_BASE_PATH || '/';
 
 export default defineConfig({

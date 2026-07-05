@@ -36,14 +36,16 @@ npm run test       # core logic self-tests
 
 ## Deploy to GitHub Pages (free)
 
-1. Push this repo to GitHub (e.g. `zachmcune/Mnemonica-Trainer`).
-2. In the repo: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-3. Merge to `main`. The included workflow (`.github/workflows/deploy-pages.yml`) builds
+1. Push this repo to GitHub and rename it to **`memtrainer`** (Settings → General →
+   Repository name).
+2. Make the repo **public** if it isn’t already (required for free GitHub Pages).
+3. In the repo: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+4. Merge to `main`. The included workflow (`.github/workflows/deploy-pages.yml`) builds
    and deploys automatically.
 
 Live URL (after deploy):
 
-`https://<your-username>.github.io/Mnemonica-Trainer/`
+`https://zachmcune.github.io/memtrainer/`
 
 If your repo name differs, update `VITE_BASE_PATH` in the workflow to
 `/<your-repo-name>/` (must start and end with `/`).

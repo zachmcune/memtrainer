@@ -31,7 +31,7 @@ jobs:
         run: npm run build
         env:
           # Must match your GitHub repo name (case-sensitive).
-          VITE_BASE_PATH: /Mnemonica-Trainer/
+          VITE_BASE_PATH: /memtrainer/
 
       - uses: actions/upload-pages-artifact@v3
         with:
