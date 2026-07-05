@@ -47,13 +47,6 @@ export interface AppSettings {
   /** Number of prompts per session, or 'all' to cover the whole scope once. */
   sessionLength: number | 'all';
   redrillMissed: boolean;
-  reminderEnabled: boolean;
-  /** "HH:mm" 24h. */
-  reminderTime: string;
-  /** IANA timezone captured at subscribe time. */
-  timezone: string;
-  /** Endpoint of the active push subscription, if any. */
-  pushEndpoint?: string;
 }
 
 export interface SessionRecord {

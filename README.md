@@ -2,89 +2,73 @@
 
 An installable Progressive Web App (PWA) for drilling the **Mnemonica** stacked-deck
 order (Juan Tamariz). Works as a normal website on Android and iOS, and can be added to
-your Home Screen to behave like a native app — including **daily push reminders**.
+your Home Screen to behave like a native app.
+
+**Static-only** — no server, no database, **$0 hosting** on GitHub Pages (or Cloudflare
+Pages / Netlify).
 
 ## Features
 
 - **Two training modes**
   - _Card → Position_: see a classic playing card, type its stack number.
   - _Position → Card_: see a stack number, pick the card (rank + suit).
-- **Configurable scope** — study the whole deck, specific sections (chunks of a chosen
-  size), or a custom position range.
+- **Configurable scope** — full deck, sections (chunks of a chosen size), or a custom
+  position range.
 - **Authentic card faces** — real classic (CC0) SVG card art, not Unicode glyphs.
-- **Instant feedback** — wrong answers reveal the correct card and are flagged; missed
-  cards can be automatically re-drilled at the end of a session.
-- **Rich stats** — per-session accuracy, response times (avg/fastest/slowest), accuracy
-  by section, cards to review; plus lifetime history: day streak, accuracy trend, and a
-  "cards to focus on" leaderboard of your weakest cards.
-- **Offline-first** — the app shell and all card art are precached; training works with
-  no connection. Progress/stats are stored on-device (IndexedDB).
-- **Daily reminders** — real scheduled Web Push notifications at a time you choose
-  (Android/desktop, and iOS 16.4+ once added to the Home Screen).
-
-## Architecture
-
-Single Railway service. An Express backend serves the built React PWA and a tiny Web
-Push API. The backend only stores anonymous push subscriptions + reminder preferences;
-all training data lives on the device. The schema leaves room for user accounts later
-(`PushSubscription.userId` is nullable) and persistence is behind a `StatsRepository`
-interface so a synced/remote store can be dropped in without UI changes.
-
-```
-frontend/   React + Vite + TypeScript PWA (vite-plugin-pwa / Workbox)
-backend/    Express + Prisma (PostgreSQL) + web-push + node-cron
-```
+- **Instant feedback** — wrong answers reveal the correct card; missed cards can be
+  re-drilled at the end of a session.
+- **Rich stats** — per-session and lifetime accuracy, response times, section breakdown,
+  day streak, and a weakest-cards leaderboard.
+- **Offline-first** — the app shell and card art are precached; training works with no
+  connection. All progress is stored on your device (IndexedDB).
 
 ## Local development
 
-Prerequisites: Node 20+, and a PostgreSQL database.
+Prerequisites: Node 20+
 
 ```bash
 npm install
-
-# 1. Generate VAPID keys for Web Push and copy them into your env
-npm run generate-vapid
-
-# 2. Create backend/.env (see .env.example) with DATABASE_URL + VAPID_* values
-#    and set VITE_VAPID_PUBLIC_KEY to the same public key.
-
-# 3. Apply the database schema
-npm run prisma:migrate --workspace backend   # first time: creates the migration
-
-# 4. Run both apps (frontend on :5173, backend on :8080, /api proxied)
-npm run dev
+npm run dev        # http://localhost:5173
+npm run build      # output in frontend/dist
+npm run preview    # serve the production build locally
+npm run test       # core logic self-tests
 ```
 
-Useful checks:
+## Deploy to GitHub Pages (free)
 
-```bash
-npm run test --workspace frontend    # core logic self-tests
-npm run build                        # full production build (frontend + backend)
-```
+1. Push this repo to GitHub (e.g. `zachmcune/Mnemonica-Trainer`).
+2. In the repo: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+3. Merge to `main`. The included workflow (`.github/workflows/deploy-pages.yml`) builds
+   and deploys automatically.
 
-## Deploying to Railway
+Live URL (after deploy):
 
-1. Create a new Railway project from this repo and add the **PostgreSQL** plugin
-   (provides `DATABASE_URL`).
-2. Generate VAPID keys locally (`npm run generate-vapid`) and set these service
-   variables:
-   - `VAPID_PUBLIC_KEY`
-   - `VAPID_PRIVATE_KEY`
-   - `VAPID_SUBJECT` — a `mailto:` address or `https:` URL (required by Apple)
-   - `VITE_VAPID_PUBLIC_KEY` — same value as `VAPID_PUBLIC_KEY` (needed at build time)
-3. Deploy. The build runs `npm install && npm run build`; the start command runs
-   `prisma migrate deploy` and then boots the server (`railway.json`).
+`https://<your-username>.github.io/Mnemonica-Trainer/`
 
-The Express server serves the SPA and the `/api/*` endpoints from one service, and a
-`node-cron` job checks every minute for subscriptions whose local time matches their
-reminder time and sends the push (cleaning up expired subscriptions automatically).
+If your repo name differs, update `VITE_BASE_PATH` in the workflow to
+`/<your-repo-name>/` (must start and end with `/`).
+
+### Other free hosts
+
+The build output is plain static files in `frontend/dist`. You can also deploy to
+**Cloudflare Pages** or **Netlify** — set the build command to `npm run build` and the
+publish directory to `frontend/dist`. For a root domain (not a subpath), omit
+`VITE_BASE_PATH` (defaults to `/`).
 
 ## Installing on your phone
 
 - **Android (Chrome):** open the site → menu → _Add to Home screen_ / _Install app_.
-- **iPhone/iPad (Safari):** open the site → Share → _Add to Home Screen_, then open the
-  app from that icon. Notifications on iOS only work when launched from the Home Screen
-  icon (iOS 16.4+).
+- **iPhone/iPad (Safari):** open the site → Share → _Add to Home Screen_, then open from
+  that icon for a full-screen app experience.
+
+## Architecture
+
+```
+frontend/   React + Vite + TypeScript PWA (offline service worker, IndexedDB stats)
+```
+
+Training data never leaves the device. A future accounts/sync layer can replace the local
+`StatsRepository` without changing the UI.
 
 ## Card artwork
 

@@ -2,7 +2,11 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+/** Set to your repo name for GitHub Pages, e.g. "/Mnemonica-Trainer/". Defaults to "/". */
+const base = process.env.VITE_BASE_PATH || '/';
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -29,8 +33,8 @@ export default defineConfig({
         background_color: '#0f172a',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         icons: [
           {
             src: 'icons/icon-192.png',
@@ -54,15 +58,6 @@ export default defineConfig({
       },
     }),
   ],
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-    },
-  },
   build: {
     outDir: 'dist',
     sourcemap: false,
