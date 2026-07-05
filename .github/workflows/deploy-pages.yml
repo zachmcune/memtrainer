@@ -32,6 +32,8 @@ jobs:
         env:
           # Must match your GitHub repo name (case-sensitive).
           VITE_BASE_PATH: /memtrainer/
+          VITE_BUILD_SHA: ${{ github.sha }}
+          VITE_BUILD_TIME: ${{ github.event.head_commit.timestamp }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

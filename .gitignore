@@ -11,4 +11,5 @@ yarn-error.log*
 coverage/
 .vite/
 frontend/dev-dist/
+frontend/public/version.json
 *.tsbuildinfo

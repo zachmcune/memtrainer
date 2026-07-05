@@ -2,6 +2,7 @@ import assert from 'node:assert';
 import { computeChunks, resolveScopePositions, buildQueue } from '../src/features/training/engine';
 import { positionOf, cardAtPosition, DECK_SIZE, stackGroupPositions } from '../src/data/mnemonica';
 import { summarizeSession, computeStreak } from '../src/features/stats/compute';
+import { isRemoteNewer, isSameBuild } from '../src/version';
 import type { AttemptResult, ScopeConfig, SessionRecord } from '../src/db/types';
 
 // Deck data
@@ -69,5 +70,15 @@ const sessions: SessionRecord[] = [
 ];
 assert.equal(computeStreak(sessions), 2);
 assert.equal(computeStreak([]), 0);
+
+// Version helpers
+const v100a = { version: '1.0.0', build: 'abc1234', builtAt: '2026-01-01T00:00:00.000Z' };
+const v100b = { version: '1.0.0', build: 'def5678', builtAt: '2026-01-02T00:00:00.000Z' };
+const v110 = { version: '1.1.0', build: 'abc1234', builtAt: '2026-01-03T00:00:00.000Z' };
+assert.equal(isSameBuild(v100a, v100a), true);
+assert.equal(isSameBuild(v100a, v100b), false);
+assert.equal(isRemoteNewer(v100a, v110), true);
+assert.equal(isRemoteNewer(v100a, v100b), true);
+assert.equal(isRemoteNewer(v110, v100a), false);
 
 console.log('All self-tests passed.');

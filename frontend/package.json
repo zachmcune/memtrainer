@@ -4,9 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/gen-version.mjs && vite",
     "icons": "node scripts/gen-icons.mjs",
-    "build": "node scripts/gen-icons.mjs && tsc --noEmit && vite build",
+    "version": "node scripts/gen-version.mjs",
+    "build": "node scripts/gen-icons.mjs && node scripts/gen-version.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "test": "tsx scripts/selftest.ts"
