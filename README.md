@@ -64,12 +64,18 @@ this readme.
 
 ### Installed app not showing new features?
 
-The Home Screen icon caches the old build. After the site above is fixed:
+Safari may be serving an old cached copy (even in a normal tab). Try in order:
 
-1. Open the live URL in Safari/Chrome (not the home-screen icon).
-2. Go to **Settings → About → Check for updates**, or use the update banner if shown.
-3. If needed: remove the home-screen icon, reopen the site in the browser, and **Add to
-   Home Screen** again. Your stats stay on the device.
+1. **Private tab test:** open the live URL in a **Private** Safari tab. If you see
+   **Settings → Queue** and **Settings → About**, the site is fine — your main browser
+   profile is just cached.
+2. **One-tap refresh:** open
+   `https://zachmcune.github.io/memtrainer/reset.html` — it clears the old cache and
+   reloads the latest build.
+3. **Manual clear:** Settings → Safari → Advanced → Website Data → remove
+   `github.io` entries for this site, then reload.
+
+Your training stats stay on the device through all of this.
 
 ### Other free hosts
 

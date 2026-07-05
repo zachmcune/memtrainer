@@ -32,6 +32,7 @@ class DexieStatsRepository implements StatsRepository {
           ...DEFAULT_SETTINGS.stackScope,
           ...(existing.stackScope ?? DEFAULT_SETTINGS.stackScope),
         },
+        queueStrategy: existing.queueStrategy ?? DEFAULT_SETTINGS.queueStrategy,
       };
     }
     await db.settings.put(DEFAULT_SETTINGS);
