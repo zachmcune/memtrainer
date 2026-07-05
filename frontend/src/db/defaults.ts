@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   scope: { ...DEFAULT_SCOPE },
   stackScope: { ...DEFAULT_SCOPE },
   sessionLength: 'all',
+  queueStrategy: 'random',
   redrillMissed: true,
   showStackNeighborsOnMiss: true,
   showStackGroupOnMiss: false,

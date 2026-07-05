@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import { db } from '../../db/db';
-import { TRAINING_MODES } from '../../db/types';
+import { QUEUE_STRATEGIES, TRAINING_MODES } from '../../db/types';
 import { useSettings } from '../../state/SettingsContext';
 import { resolveScopePositions } from '../training/engine';
 import { accuracyColor, computeStreak, summarizeHistory } from '../stats/compute';
@@ -14,6 +14,7 @@ export function HomePage() {
 
   const scopeCount = resolveScopePositions(settings.scope).length;
   const modeInfo = TRAINING_MODES.find((m) => m.value === settings.mode)!;
+  const queueInfo = QUEUE_STRATEGIES.find((s) => s.value === settings.queueStrategy)!;
   const streak = sessions ? computeStreak(sessions) : 0;
   const history =
     sessions && cardStats ? summarizeHistory(sessions, cardStats) : null;
@@ -63,6 +64,10 @@ export function HomePage() {
         <div className="row spread" style={{ marginTop: 10 }}>
           <span className="muted">Scope</span>
           <span className="pill">{scopeCount} cards</span>
+        </div>
+        <div className="row spread" style={{ marginTop: 10 }}>
+          <span className="muted">Queue</span>
+          <span className="pill">{queueInfo.label}</span>
         </div>
         <Link to="/settings" className="btn ghost block" style={{ marginTop: 14 }}>
           Change what you study

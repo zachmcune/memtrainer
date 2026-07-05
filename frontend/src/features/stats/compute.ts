@@ -76,6 +76,31 @@ export interface HistorySummary {
   trend: { accuracy: number; date: number }[];
 }
 
+export interface RankedCard {
+  code: string;
+  position: number;
+  mode: TrainingMode;
+  attempts: number;
+  correct: number;
+  accuracy: number;
+  avgTimeMs: number;
+}
+
+export function rankCardStats(cardStats: CardStat[], mode: TrainingMode): RankedCard[] {
+  return cardStats
+    .filter((s) => s.mode === mode && s.attempts > 0)
+    .map((s) => ({
+      code: s.code,
+      position: s.position,
+      mode: s.mode,
+      attempts: s.attempts,
+      correct: s.correct,
+      accuracy: s.correct / s.attempts,
+      avgTimeMs: s.totalTimeMs / s.attempts,
+    }))
+    .sort((a, b) => b.accuracy - a.accuracy || b.attempts - a.attempts || a.position - b.position);
+}
+
 export function summarizeHistory(
   sessions: SessionRecord[],
   cardStats: CardStat[],

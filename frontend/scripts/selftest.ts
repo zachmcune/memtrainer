@@ -1,9 +1,16 @@
 import assert from 'node:assert';
-import { computeChunks, resolveScopePositions, buildQueue } from '../src/features/training/engine';
+import {
+  buildDynamicQueue,
+  buildQueue,
+  computeChunks,
+  computePositionWeights,
+  resolveScopePositions,
+  weaknessWeight,
+} from '../src/features/training/engine';
 import { positionOf, cardAtPosition, DECK_SIZE, stackGroupPositions } from '../src/data/mnemonica';
-import { summarizeSession, computeStreak } from '../src/features/stats/compute';
+import { rankCardStats, summarizeSession, computeStreak } from '../src/features/stats/compute';
 import { isRemoteNewer, isSameBuild } from '../src/version';
-import type { AttemptResult, ScopeConfig, SessionRecord } from '../src/db/types';
+import type { AttemptResult, CardStat, ScopeConfig, SessionRecord } from '../src/db/types';
 
 // Deck data
 assert.equal(DECK_SIZE, 52);
@@ -44,6 +51,42 @@ assert.equal(buildQueue([1, 2, 3], 7).length, 7);
 assert.equal(buildQueue([], 'all').length, 0);
 const q = buildQueue([1, 2, 3, 4, 5], 5);
 assert.deepEqual([...q].sort((a, b) => a - b), [1, 2, 3, 4, 5]);
+
+// Dynamic queue weights weak cards higher
+const weakStat: CardStat = {
+  id: 'card-to-position__2H',
+  mode: 'card-to-position',
+  code: '2H',
+  position: 2,
+  attempts: 10,
+  correct: 2,
+  totalTimeMs: 10000,
+  lastSeen: 1,
+};
+const strongStat: CardStat = {
+  id: 'card-to-position__4C',
+  mode: 'card-to-position',
+  code: '4C',
+  position: 1,
+  attempts: 10,
+  correct: 9,
+  totalTimeMs: 5000,
+  lastSeen: 1,
+};
+assert.ok(weaknessWeight(weakStat) > weaknessWeight(strongStat));
+
+const weights = computePositionWeights([1, 2], [weakStat, strongStat], 'card-to-position');
+const weakWeight = weights.find((w) => w.position === 2)!.weight;
+const strongWeight = weights.find((w) => w.position === 1)!.weight;
+assert.ok(weakWeight > strongWeight);
+
+const dynamic = buildDynamicQueue([1, 2], 'all', [weakStat, strongStat], 'card-to-position');
+assert.equal(dynamic.length, 2);
+assert.deepEqual([...dynamic].sort((a, b) => a - b), [1, 2]);
+
+const ranked = rankCardStats([weakStat, strongStat], 'card-to-position');
+assert.equal(ranked[0].code, '4C');
+assert.equal(ranked[1].code, '2H');
 
 // Session summary
 const results: AttemptResult[] = [
