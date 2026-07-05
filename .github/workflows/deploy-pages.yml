@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -35,16 +35,23 @@ jobs:
           VITE_BUILD_SHA: ${{ github.sha }}
           VITE_BUILD_TIME: ${{ github.event.head_commit.timestamp }}
 
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: frontend/dist
+      - name: Point GitHub Pages at the gh-pages branch
+        run: |
+          gh api --method PUT "repos/${{ github.repository }}/pages" \
+            -f build_type=legacy \
+            -f "source[branch]=gh-pages" \
+            -f "source[path]=/" \
+            && echo "Pages source set to gh-pages branch." \
+            || echo "::warning::Could not set Pages source automatically. In GitHub: Settings → Pages → Deploy from branch gh-pages (/)."
+        env:
+          GH_TOKEN: ${{ github.token }}
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publish built app to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ github.token }}
+          publish_dir: frontend/dist
+          publish_branch: gh-pages
+          force_orphan: true
+          enable_jekyll: false
+          commit_message: 'Deploy PWA from ${{ github.sha }}'
