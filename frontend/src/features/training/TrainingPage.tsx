@@ -8,10 +8,12 @@ import { useTrainingSession } from '../../state/TrainingSessionContext';
 import { SessionSummary } from '../stats/SessionSummary';
 import { buildSessionQueue, resolveScopePositions } from './engine';
 import { buildInitialRunnerState, TrainingRunner } from './TrainingRunner';
+import { useSound } from '../../audio/useSound';
 
 export function TrainingPage() {
   const { settings, loading } = useSettings();
   const navigate = useNavigate();
+  const play = useSound();
   const { phase, finished, startSession } = useTrainingSession();
   const cardStats = useLiveQuery(() => db.cardStats.toArray(), [], undefined);
 
@@ -30,8 +32,9 @@ export function TrainingPage() {
       settings.mode,
     );
     if (queue.length === 0) return;
+    play('deal');
     startSession(buildInitialRunnerState(queue, settings.mode, scopePositions));
-  }, [cardStats, scopePositions, settings, startSession]);
+  }, [cardStats, scopePositions, settings, startSession, play]);
 
   if (loading) {
     return <div className="empty">Loading…</div>;

@@ -5,6 +5,7 @@ import { cardLabel } from '../../data/deck';
 import { cardAtPosition } from '../../data/mnemonica';
 import { useSettings } from '../../state/SettingsContext';
 import { resolveScopePositions } from '../training/engine';
+import { useSound } from '../../audio/useSound';
 
 const VISIBLE_RADIUS = 2;
 const MIN_SWIPE_PX = 36;
@@ -35,6 +36,7 @@ function cardStyle(offset: number, dragPx: number, width: number) {
 
 export function DeckPage() {
   const { settings, update, loading } = useSettings();
+  const play = useSound();
   const positions = useMemo(
     () => resolveScopePositions(settings.stackScope),
     [settings.stackScope],
@@ -95,17 +97,21 @@ export function DeckPage() {
     [],
   );
 
-  const goTo = useCallback((next: number) => {
-    const clamped = clampIndex(next, positionsRef.current.length);
-    if (clamped === indexRef.current) {
+  const goTo = useCallback(
+    (next: number) => {
+      const clamped = clampIndex(next, positionsRef.current.length);
+      if (clamped === indexRef.current) {
+        setSlideAnimating(true);
+        setDragPx(0);
+        return;
+      }
       setSlideAnimating(true);
       setDragPx(0);
-      return;
-    }
-    setSlideAnimating(true);
-    setDragPx(0);
-    setIndex(clamped);
-  }, []);
+      setIndex(clamped);
+      play('deal');
+    },
+    [play],
+  );
 
   const goPrev = useCallback(() => goTo(indexRef.current - 1), [goTo]);
   const goNext = useCallback(() => goTo(indexRef.current + 1), [goTo]);
@@ -123,11 +129,13 @@ export function DeckPage() {
 
       if (deltaX <= -threshold && cur < max - 1) {
         setIndex(cur + 1);
+        play('deal');
       } else if (deltaX >= threshold && cur > 0) {
         setIndex(cur - 1);
+        play('deal');
       }
     },
-    [],
+    [play],
   );
 
   useEffect(() => {

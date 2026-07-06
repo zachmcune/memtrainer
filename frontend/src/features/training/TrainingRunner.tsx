@@ -16,6 +16,7 @@ import { shuffle } from './engine';
 import { CardPicker, NumberPad } from './inputs';
 import { StackNeighborReveal } from './StackNeighborReveal';
 import { StackGroupReveal } from './StackGroupReveal';
+import { useSound } from '../../audio/useSound';
 
 /** Stored in attempt records when the user taps "I don't know". */
 export const IDK_ANSWER = '—';
@@ -31,6 +32,7 @@ export function TrainingRunner() {
 function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
   const { settings } = useSettings();
   const { patchRunner, togglePause, finishSession, quitSession } = useTrainingSession();
+  const play = useSound();
 
   const {
     queue,
@@ -65,6 +67,7 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
         timeMs,
         timestamp: Date.now(),
       };
+      play(correct ? 'correct' : 'wrong');
       patchRunner({
         results: [...results, result],
         lastCorrect: correct,
@@ -72,7 +75,7 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
         revealing: true,
       });
     },
-    [revealing, paused, card, runner, mode, position, results, patchRunner],
+    [revealing, paused, card, runner, mode, position, results, patchRunner, play],
   );
 
   const submit = useCallback(() => {
@@ -101,6 +104,7 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
           ...new Set(allResults.filter((r) => !r.correct).map((r) => r.position)),
         ];
         if (missed.length > 0) {
+          play('deal');
           patchRunner((prev) => ({
             queue: [...prev.queue, ...shuffle(missed)],
             idx: prev.idx + 1,
@@ -125,9 +129,11 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
         correct: allResults.filter((r) => r.correct).length,
       };
       void repository.saveSession(session);
+      play('win');
       finishSession(session);
       return;
     }
+    play('deal');
     patchRunner((prev) => ({
       idx: prev.idx + 1,
       revealing: false,
@@ -149,6 +155,7 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
     scopePositions,
     patchRunner,
     finishSession,
+    play,
   ]);
 
   useEffect(() => {
@@ -184,13 +191,24 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
     <div className={`trainer${paused ? ' trainer-paused' : ''}`}>
       <div className="row spread" style={{ width: '100%' }}>
         <div className="row" style={{ gap: 8 }}>
-          <button type="button" className="pill" onClick={quitSession} style={{ cursor: 'pointer' }}>
+          <button
+            type="button"
+            className="pill"
+            onClick={() => {
+              play('tap');
+              quitSession();
+            }}
+            style={{ cursor: 'pointer' }}
+          >
             ✕ Quit
           </button>
           <button
             type="button"
             className={`pill${paused ? ' active' : ''}`}
-            onClick={togglePause}
+            onClick={() => {
+              play('toggle');
+              togglePause();
+            }}
             style={{ cursor: 'pointer' }}
             aria-pressed={paused}
           >
@@ -295,7 +313,14 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
         <div className="pause-overlay" role="status">
           <p className="pause-title">Paused</p>
           <p className="muted pause-note">Your session is saved. Switch tabs or tap Resume.</p>
-          <button type="button" className="btn primary block" onClick={togglePause}>
+          <button
+            type="button"
+            className="btn primary block"
+            onClick={() => {
+              play('toggle');
+              togglePause();
+            }}
+          >
             Resume training
           </button>
         </div>

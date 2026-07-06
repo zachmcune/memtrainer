@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { ScopeControls } from '../../components/ScopeControls';
 import { repository } from '../../db/repository';
-import { QUEUE_STRATEGIES, TRAINING_MODES } from '../../db/types';
+import { QUEUE_STRATEGIES, TRAINING_MODES, type ThemeId } from '../../db/types';
 import { usePwaUpdate } from '../../pwa/UpdateContext';
 import { useSettings } from '../../state/SettingsContext';
 import { formatBuildDate, formatVersion } from '../../version';
 import { resolveScopePositions } from '../training/engine';
+import { THEMES } from '../../theme/themes';
+import { useSound } from '../../audio/useSound';
 
 const SESSION_LENGTHS: (number | 'all')[] = ['all', 10, 20, 30, 52];
 
 export function SettingsPage() {
   const { settings, update, loading } = useSettings();
+  const play = useSound();
   const {
     currentVersion,
     latestVersion,
@@ -41,10 +44,86 @@ export function SettingsPage() {
         ? 'Checking…'
         : 'Unknown';
 
+  const selectTheme = (id: ThemeId) => {
+    if (id === settings.theme) return;
+    void update({ theme: id });
+    play('toggle');
+  };
+
+  const volumePct = Math.round(settings.soundVolume * 100);
+
   return (
     <div>
       <h1>Settings</h1>
       <p className="subtitle">Tune how you drill the stack.</p>
+
+      <h2>Appearance</h2>
+      <div className="theme-grid">
+        {THEMES.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            className={`theme-card${settings.theme === t.id ? ' active' : ''}`}
+            onClick={() => selectTheme(t.id)}
+            aria-pressed={settings.theme === t.id}
+          >
+            <span className="theme-swatches" aria-hidden>
+              {t.swatches.map((c, i) => (
+                <span key={i} style={{ background: c }} />
+              ))}
+            </span>
+            <span className="theme-name">{t.label}</span>
+            <span className="theme-desc">{t.description}</span>
+          </button>
+        ))}
+      </div>
+
+      <h2>Sound &amp; motion</h2>
+      <div className="toggle-row">
+        <div>
+          <div>Sound effects</div>
+          <div className="muted">Synthesized clicks, chimes, and deals. No downloads.</div>
+        </div>
+        <Switch
+          checked={settings.soundEnabled}
+          silent
+          onChange={(v) => {
+            void update({ soundEnabled: v });
+            if (v) play('correct');
+          }}
+        />
+      </div>
+      <div className="field" style={{ marginTop: 12 }}>
+        <label htmlFor="soundVolume">Volume · {volumePct}%</label>
+        <input
+          id="soundVolume"
+          className="range"
+          type="range"
+          min={0}
+          max={100}
+          value={volumePct}
+          style={{ '--range-fill': `${volumePct}%` } as CSSProperties}
+          disabled={!settings.soundEnabled}
+          onChange={(e) => update({ soundVolume: Number(e.target.value) / 100 })}
+          onPointerUp={() => settings.soundEnabled && play('tap')}
+        />
+      </div>
+      <div className="toggle-row">
+        <div>
+          <div>Reduce motion</div>
+          <div className="muted">
+            Turn off animations and glows. Also honored automatically from your device setting.
+          </div>
+        </div>
+        <Switch
+          checked={settings.reducedMotion}
+          silent
+          onChange={(v) => {
+            void update({ reducedMotion: v });
+            play('toggle');
+          }}
+        />
+      </div>
 
       <h2>Mode</h2>
       <div className="seg" role="tablist">
@@ -52,7 +131,10 @@ export function SettingsPage() {
           <button
             key={m.value}
             className={settings.mode === m.value ? 'active' : ''}
-            onClick={() => update({ mode: m.value })}
+            onClick={() => {
+              play('toggle');
+              update({ mode: m.value });
+            }}
           >
             {m.label}
           </button>
@@ -68,7 +150,10 @@ export function SettingsPage() {
           <button
             key={s.value}
             className={settings.queueStrategy === s.value ? 'active' : ''}
-            onClick={() => update({ queueStrategy: s.value })}
+            onClick={() => {
+              play('toggle');
+              update({ queueStrategy: s.value });
+            }}
           >
             {s.label}
           </button>
@@ -200,16 +285,23 @@ export function SettingsPage() {
 function Switch({
   checked,
   onChange,
+  silent,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
+  /** Skip the built-in toggle sound (the caller plays its own). */
+  silent?: boolean;
 }) {
+  const play = useSound();
   return (
     <label className="switch">
       <input
         type="checkbox"
         checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
+        onChange={(e) => {
+          if (!silent) play('toggle');
+          onChange(e.target.checked);
+        }}
       />
       <span className="track" />
     </label>
