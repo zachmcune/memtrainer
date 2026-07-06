@@ -898,9 +898,20 @@ input:focus {
 }
 
 .keypad button.primary {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 88%, white 4%),
+    color-mix(in srgb, var(--accent) 62%, var(--accent-2) 38%)
+  );
   color: var(--accent-contrast);
   border-color: transparent;
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+.keypad button:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  pointer-events: none;
 }
 
 /* Card picker */
