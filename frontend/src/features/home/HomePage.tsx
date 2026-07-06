@@ -6,9 +6,12 @@ import { useSettings } from '../../state/SettingsContext';
 import { resolveScopePositions } from '../training/engine';
 import { accuracyColor, computeStreak, summarizeHistory } from '../stats/compute';
 import { isIos, isStandalone } from '../../pwa/install';
+import { useCountUp } from '../../hooks/useCountUp';
+import { useSound } from '../../audio/useSound';
 
 export function HomePage() {
   const { settings } = useSettings();
+  const play = useSound();
   const sessions = useLiveQuery(() => db.sessions.toArray(), [], undefined);
   const cardStats = useLiveQuery(() => db.cardStats.toArray(), [], undefined);
 
@@ -16,8 +19,11 @@ export function HomePage() {
   const modeInfo = TRAINING_MODES.find((m) => m.value === settings.mode)!;
   const queueInfo = QUEUE_STRATEGIES.find((s) => s.value === settings.queueStrategy)!;
   const streak = sessions ? computeStreak(sessions) : 0;
+  const streakAnimated = useCountUp(streak);
   const history =
     sessions && cardStats ? summarizeHistory(sessions, cardStats) : null;
+  const accuracyPct = history ? Math.round(history.overallAccuracy * 100) : 0;
+  const accuracyAnimated = useCountUp(accuracyPct);
 
   const showInstallHint = isIos() && !isStandalone();
 
@@ -36,15 +42,18 @@ export function HomePage() {
       <div className="card-panel">
         <div className="row spread">
           <div>
-            <div style={{ fontSize: 30, fontWeight: 800 }}>{streak}🔥</div>
+            <div className="hero-stat" style={{ fontSize: 30, fontWeight: 800 }}>
+              {streakAnimated}🔥
+            </div>
             <div className="muted">day streak</div>
           </div>
           {history && history.totalSessions > 0 && (
             <div className="center">
               <div
+                className="hero-stat"
                 style={{ fontSize: 30, fontWeight: 800, color: accuracyColor(history.overallAccuracy) }}
               >
-                {Math.round(history.overallAccuracy * 100)}%
+                {accuracyAnimated}%
               </div>
               <div className="muted">lifetime accuracy</div>
             </div>
@@ -52,7 +61,12 @@ export function HomePage() {
         </div>
       </div>
 
-      <Link to="/train" className="btn primary block" style={{ marginTop: 6 }}>
+      <Link
+        to="/train"
+        className="btn primary block"
+        style={{ marginTop: 6 }}
+        onClick={() => play('tap')}
+      >
         Start training
       </Link>
 

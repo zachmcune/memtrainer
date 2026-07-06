@@ -1,4 +1,4 @@
-import { NavLink, Route, Routes } from 'react-router-dom';
+import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { UpdateBanner } from './components/UpdateBanner';
 import { HomePage } from './features/home/HomePage';
 import { TrainingPage } from './features/training/TrainingPage';
@@ -7,13 +7,16 @@ import { DeckPage } from './features/deck/DeckPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { StatsPage } from './features/stats/StatsPage';
 import { TrainingSessionProvider } from './state/TrainingSessionContext';
+import { useSound } from './audio/useSound';
 
 function NavItem({ to, label, icon }: { to: string; label: string; icon: string }) {
+  const play = useSound();
   return (
     <NavLink
       to={to}
       end={to === '/'}
       className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+      onClick={() => play('nav')}
     >
       <span className="nav-icon" aria-hidden>
         {icon}
@@ -24,19 +27,22 @@ function NavItem({ to, label, icon }: { to: string; label: string; icon: string 
 }
 
 export default function App() {
+  const location = useLocation();
   return (
     <TrainingSessionProvider>
       <div className="app-shell">
         <main className="app-main">
           <UpdateBanner />
           <TrainingResumeBanner />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/train" element={<TrainingPage />} />
-            <Route path="/stack" element={<DeckPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/stats" element={<StatsPage />} />
-          </Routes>
+          <div className="view" key={location.pathname}>
+            <Routes location={location}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/train" element={<TrainingPage />} />
+              <Route path="/stack" element={<DeckPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/stats" element={<StatsPage />} />
+            </Routes>
+          </div>
         </main>
         <nav className="app-nav">
           <NavItem to="/" label="Home" icon={'\u2660'} />

@@ -2,17 +2,19 @@ import { PlayingCard } from '../../components/PlayingCard';
 import { cardLabel, parseCard } from '../../data/deck';
 import type { AttemptResult } from '../../db/types';
 import { accuracyColor, formatMs, summarizeSession } from './compute';
+import { useCountUp } from '../../hooks/useCountUp';
 
 export function SessionSummary({ results }: { results: AttemptResult[] }) {
   const s = summarizeSession(results);
   const pct = Math.round(s.accuracy * 100);
+  const pctAnimated = useCountUp(pct);
 
   return (
     <div>
       <div className="stat-grid">
         <div className="stat-tile">
           <div className="value" style={{ color: accuracyColor(s.accuracy) }}>
-            {pct}%
+            {pctAnimated}%
           </div>
           <div className="label">
             Accuracy ({s.correct}/{s.total})

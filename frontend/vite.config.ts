@@ -42,8 +42,8 @@ export default defineConfig({
         short_name: 'Mnemonica',
         description:
           'Train the Mnemonica stacked-deck order with card-to-position and position-to-card drills.',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        theme_color: '#070a10',
+        background_color: '#070a10',
         display: 'standalone',
         orientation: 'portrait',
         start_url: base,

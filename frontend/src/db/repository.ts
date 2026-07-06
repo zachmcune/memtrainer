@@ -33,6 +33,10 @@ class DexieStatsRepository implements StatsRepository {
           ...(existing.stackScope ?? DEFAULT_SETTINGS.stackScope),
         },
         queueStrategy: existing.queueStrategy ?? DEFAULT_SETTINGS.queueStrategy,
+        theme: existing.theme ?? DEFAULT_SETTINGS.theme,
+        soundEnabled: existing.soundEnabled ?? DEFAULT_SETTINGS.soundEnabled,
+        soundVolume: existing.soundVolume ?? DEFAULT_SETTINGS.soundVolume,
+        reducedMotion: existing.reducedMotion ?? DEFAULT_SETTINGS.reducedMotion,
       };
     }
     await db.settings.put(DEFAULT_SETTINGS);

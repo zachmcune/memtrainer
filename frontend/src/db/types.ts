@@ -56,6 +56,15 @@ export interface ScopeConfig {
   rangeEnd: number;
 }
 
+/** Identifier of a color scheme; the full registry lives in `theme/themes.ts`. */
+export type ThemeId =
+  | 'neon-noir'
+  | 'emerald-royale'
+  | 'crimson-highroller'
+  | 'violet-lux'
+  | 'azure-ice'
+  | 'gold-midnight';
+
 export interface AppSettings {
   id: 'app';
   mode: TrainingMode;
@@ -71,6 +80,14 @@ export interface AppSettings {
   showStackNeighborsOnMiss: boolean;
   /** On a miss, show the fixed group of four stack cards the answer belongs to (1–4, 5–8, …). */
   showStackGroupOnMiss: boolean;
+  /** Active color scheme. */
+  theme: ThemeId;
+  /** Master toggle for synthesized sound effects. */
+  soundEnabled: boolean;
+  /** Sound effect volume, 0–1. */
+  soundVolume: number;
+  /** When true, disables non-essential animation regardless of OS preference. */
+  reducedMotion: boolean;
 }
 
 export interface SessionRecord {

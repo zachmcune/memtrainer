@@ -21,6 +21,10 @@ Pages / Netlify).
   day streak, and a weakest-cards leaderboard.
 - **Offline-first** — the app shell and card art are precached; training works with no
   connection. All progress is stored on your device (IndexedDB).
+- **Futuristic minimal casino look** — a glass-and-neon redesign with six color
+  themes (Settings → Appearance), smooth animations, and synthesized sound
+  effects (no audio files to download). Respects "reduce motion" and can be muted.
+  See [`OVERHAUL_PLAN.md`](OVERHAUL_PLAN.md) for the design spec.
 
 ## Local development
 
