@@ -11,4 +11,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   redrillMissed: true,
   showStackNeighborsOnMiss: true,
   showStackGroupOnMiss: false,
+  theme: 'neon-noir',
+  soundEnabled: true,
+  soundVolume: 0.6,
+  reducedMotion: false,
 };
