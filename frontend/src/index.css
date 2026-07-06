@@ -745,7 +745,7 @@ input:focus {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: clamp(8px, 1.7vh, 18px);
   position: relative;
   width: 100%;
   animation: viewIn 0.42s var(--ease-out) both;
@@ -825,13 +825,13 @@ input:focus {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  min-height: 260px;
+  gap: clamp(6px, 1.4vh, 10px);
+  min-height: clamp(120px, 25vh, 220px);
   justify-content: center;
 }
 
 .position-badge {
-  font-size: 88px;
+  font-size: clamp(58px, 15vh, 88px);
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -864,24 +864,25 @@ input:focus {
   width: 100%;
   max-width: 320px;
   text-align: center;
-  font-size: 30px;
+  font-size: clamp(22px, 4vh, 30px);
   font-weight: 700;
   letter-spacing: 6px;
   font-variant-numeric: tabular-nums;
+  padding: clamp(8px, 1.4vh, 12px) 12px;
 }
 
 /* Keypad */
 .keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: clamp(6px, 1.2vh, 10px);
   width: 100%;
   max-width: 320px;
 }
 
 .keypad button {
-  padding: 17px 0;
-  font-size: 22px;
+  padding: clamp(10px, 1.7vh, 17px) 0;
+  font-size: clamp(18px, 2.4vh, 22px);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   border-radius: var(--radius-sm);
@@ -898,9 +899,20 @@ input:focus {
 }
 
 .keypad button.primary {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 88%, white 4%),
+    color-mix(in srgb, var(--accent) 62%, var(--accent-2) 38%)
+  );
   color: var(--accent-contrast);
   border-color: transparent;
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+.keypad button:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  pointer-events: none;
 }
 
 /* Card picker */
@@ -913,7 +925,7 @@ input:focus {
 }
 
 .rank-grid button {
-  padding: 12px 0;
+  padding: clamp(8px, 1.4vh, 12px) 0;
   font-size: 16px;
   font-weight: 700;
   border-radius: 10px;
@@ -943,7 +955,7 @@ input:focus {
 }
 
 .suit-grid button {
-  padding: 14px 0;
+  padding: clamp(9px, 1.6vh, 14px) 0;
   font-size: 26px;
   border-radius: 10px;
   border: 1px solid var(--border);

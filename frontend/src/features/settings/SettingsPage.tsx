@@ -57,74 +57,6 @@ export function SettingsPage() {
       <h1>Settings</h1>
       <p className="subtitle">Tune how you drill the stack.</p>
 
-      <h2>Appearance</h2>
-      <div className="theme-grid">
-        {THEMES.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className={`theme-card${settings.theme === t.id ? ' active' : ''}`}
-            onClick={() => selectTheme(t.id)}
-            aria-pressed={settings.theme === t.id}
-          >
-            <span className="theme-swatches" aria-hidden>
-              {t.swatches.map((c, i) => (
-                <span key={i} style={{ background: c }} />
-              ))}
-            </span>
-            <span className="theme-name">{t.label}</span>
-            <span className="theme-desc">{t.description}</span>
-          </button>
-        ))}
-      </div>
-
-      <h2>Sound &amp; motion</h2>
-      <div className="toggle-row">
-        <div>
-          <div>Sound effects</div>
-          <div className="muted">Synthesized clicks, chimes, and deals. No downloads.</div>
-        </div>
-        <Switch
-          checked={settings.soundEnabled}
-          silent
-          onChange={(v) => {
-            void update({ soundEnabled: v });
-            if (v) play('correct');
-          }}
-        />
-      </div>
-      <div className="field" style={{ marginTop: 12 }}>
-        <label htmlFor="soundVolume">Volume · {volumePct}%</label>
-        <input
-          id="soundVolume"
-          className="range"
-          type="range"
-          min={0}
-          max={100}
-          value={volumePct}
-          style={{ '--range-fill': `${volumePct}%` } as CSSProperties}
-          disabled={!settings.soundEnabled}
-          onChange={(e) => update({ soundVolume: Number(e.target.value) / 100 })}
-          onPointerUp={() => settings.soundEnabled && play('tap')}
-        />
-      </div>
-      <div className="toggle-row">
-        <div>
-          <div>Reduce motion</div>
-          <div className="muted">
-            Turn off animations and glows. Also honored automatically from your device setting.
-          </div>
-        </div>
-        <Switch
-          checked={settings.reducedMotion}
-          silent
-          onChange={(v) => {
-            void update({ reducedMotion: v });
-            play('toggle');
-          }}
-        />
-      </div>
-
       <h2>Mode</h2>
       <div className="seg" role="tablist">
         {TRAINING_MODES.map((m) => (
@@ -225,6 +157,74 @@ export function SettingsPage() {
         <Switch
           checked={settings.showStackGroupOnMiss}
           onChange={(v) => update({ showStackGroupOnMiss: v })}
+        />
+      </div>
+
+      <h2>Appearance</h2>
+      <div className="theme-grid">
+        {THEMES.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            className={`theme-card${settings.theme === t.id ? ' active' : ''}`}
+            onClick={() => selectTheme(t.id)}
+            aria-pressed={settings.theme === t.id}
+          >
+            <span className="theme-swatches" aria-hidden>
+              {t.swatches.map((c, i) => (
+                <span key={i} style={{ background: c }} />
+              ))}
+            </span>
+            <span className="theme-name">{t.label}</span>
+            <span className="theme-desc">{t.description}</span>
+          </button>
+        ))}
+      </div>
+
+      <h2>Sound &amp; motion</h2>
+      <div className="toggle-row">
+        <div>
+          <div>Sound effects</div>
+          <div className="muted">Synthesized clicks, chimes, and deals. No downloads.</div>
+        </div>
+        <Switch
+          checked={settings.soundEnabled}
+          silent
+          onChange={(v) => {
+            void update({ soundEnabled: v });
+            if (v) play('correct');
+          }}
+        />
+      </div>
+      <div className="field" style={{ marginTop: 12 }}>
+        <label htmlFor="soundVolume">Volume · {volumePct}%</label>
+        <input
+          id="soundVolume"
+          className="range"
+          type="range"
+          min={0}
+          max={100}
+          value={volumePct}
+          style={{ '--range-fill': `${volumePct}%` } as CSSProperties}
+          disabled={!settings.soundEnabled}
+          onChange={(e) => update({ soundVolume: Number(e.target.value) / 100 })}
+          onPointerUp={() => settings.soundEnabled && play('tap')}
+        />
+      </div>
+      <div className="toggle-row">
+        <div>
+          <div>Reduce motion</div>
+          <div className="muted">
+            Turn off animations and glows. Also honored automatically from your device setting.
+          </div>
+        </div>
+        <Switch
+          checked={settings.reducedMotion}
+          silent
+          onChange={(v) => {
+            void update({ reducedMotion: v });
+            play('toggle');
+          }}
         />
       </div>
 

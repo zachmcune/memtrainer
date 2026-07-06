@@ -225,7 +225,7 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
 
       <div className="prompt-area">
         {mode === 'card-to-position' ? (
-          <PlayingCard card={card} width={190} />
+          <PlayingCard card={card} width="clamp(112px, 22vh, 180px)" />
         ) : (
           <div className="position-badge">
             {position}
