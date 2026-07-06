@@ -4,6 +4,7 @@ import { HomePage } from './features/home/HomePage';
 import { TrainingPage } from './features/training/TrainingPage';
 import { TrainingResumeBanner } from './features/training/TrainingRunner';
 import { DeckPage } from './features/deck/DeckPage';
+import { OrderPage } from './features/order/OrderPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { StatsPage } from './features/stats/StatsPage';
 import { TrainingSessionProvider } from './state/TrainingSessionContext';
@@ -38,6 +39,7 @@ export default function App() {
             <Routes location={location}>
               <Route path="/" element={<HomePage />} />
               <Route path="/train" element={<TrainingPage />} />
+              <Route path="/order" element={<OrderPage />} />
               <Route path="/stack" element={<DeckPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/stats" element={<StatsPage />} />
@@ -47,6 +49,7 @@ export default function App() {
         <nav className="app-nav">
           <NavItem to="/" label="Home" icon={'\u2660'} />
           <NavItem to="/train" label="Train" icon={'\u25B6'} />
+          <NavItem to="/order" label="Order" icon={'\u21C5'} />
           <NavItem to="/stack" label="Stack" icon={'\u2663'} />
           <NavItem to="/stats" label="Stats" icon={'\u25A6'} />
           <NavItem to="/settings" label="Settings" icon={'\u2699'} />
