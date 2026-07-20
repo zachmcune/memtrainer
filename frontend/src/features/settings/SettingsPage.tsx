@@ -119,7 +119,11 @@ export function SettingsPage() {
         >
           {SESSION_LENGTHS.map((n) => (
             <option key={String(n)} value={String(n)}>
-              {n === 'all' ? 'Whole scope (once)' : `${n} prompts`}
+              {n === 'all'
+                ? settings.queueStrategy === 'spaced'
+                  ? 'All due cards'
+                  : 'Whole scope (once)'
+                : `${n} prompts`}
             </option>
           ))}
         </select>
@@ -157,6 +161,18 @@ export function SettingsPage() {
         <Switch
           checked={settings.showStackGroupOnMiss}
           onChange={(v) => update({ showStackGroupOnMiss: v })}
+        />
+      </div>
+      <div className="toggle-row">
+        <div>
+          <div>Flash prompt</div>
+          <div className="muted">
+            Memorize the card or position, then answer after it disappears.
+          </div>
+        </div>
+        <Switch
+          checked={settings.flashPrompt}
+          onChange={(v) => update({ flashPrompt: v })}
         />
       </div>
 

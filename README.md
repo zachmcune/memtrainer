@@ -12,6 +12,7 @@ Pages / Netlify).
 - **Two training modes**
   - _Card → Position_: see a classic playing card, type its stack number.
   - _Position → Card_: see a stack number, pick the card (rank + suit).
+- **Spaced review** — overdue cards first so memory lasts across days (Random and Dynamic queues still available).
 - **Configurable scope** — full deck, sections (chunks of a chosen size), or a custom
   position range.
 - **Authentic card faces** — real classic (CC0) SVG card art, not Unicode glyphs.

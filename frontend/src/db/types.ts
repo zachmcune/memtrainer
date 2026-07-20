@@ -1,7 +1,7 @@
 export type TrainingMode = 'card-to-position' | 'position-to-card';
 
 /** How the training session picks which cards to prompt next. */
-export type QueueStrategy = 'random' | 'dynamic';
+export type QueueStrategy = 'spaced' | 'random' | 'dynamic';
 
 export const TRAINING_MODES: { value: TrainingMode; label: string; help: string }[] = [
   {
@@ -18,6 +18,11 @@ export const TRAINING_MODES: { value: TrainingMode; label: string; help: string 
 
 export const QUEUE_STRATEGIES: { value: QueueStrategy; label: string; help: string }[] = [
   {
+    value: 'spaced',
+    label: 'Spaced',
+    help: 'Review cards when they are due so memory lasts; prioritizes overdue cards in your scope.',
+  },
+  {
     value: 'random',
     label: 'Random',
     help: 'Shuffled cards from your study scope.',
@@ -29,6 +34,8 @@ export const QUEUE_STRATEGIES: { value: QueueStrategy; label: string; help: stri
   },
 ];
 
+/** Brief flash duration for the optional flash-prompt setting (ms). */
+export const FLASH_PROMPT_MS = 1000;
 /** A single answered prompt within a session. */
 export interface AttemptResult {
   /** Canonical card code, e.g. "4C". */
@@ -80,6 +87,10 @@ export interface AppSettings {
   showStackNeighborsOnMiss: boolean;
   /** On a miss, show the fixed group of four stack cards the answer belongs to (1–4, 5–8, …). */
   showStackGroupOnMiss: boolean;
+  /**
+   * When true, briefly show the prompt (card or position), hide it, then unlock answering.
+   */
+  flashPrompt: boolean;
   /** Active color scheme. */
   theme: ThemeId;
   /** Master toggle for synthesized sound effects. */
@@ -89,7 +100,6 @@ export interface AppSettings {
   /** When true, disables non-essential animation regardless of OS preference. */
   reducedMotion: boolean;
 }
-
 export interface SessionRecord {
   id?: number;
   startedAt: number;
@@ -112,4 +122,14 @@ export interface CardStat {
   correct: number;
   totalTimeMs: number;
   lastSeen: number;
+  /** When this card is next due for spaced review (0 = due / new). */
+  dueAt: number;
+  /** Current spaced-review interval in days (0 = new or relearning). */
+  intervalDays: number;
+  /** Ease factor for growing intervals (SM-2 style). */
+  ease: number;
+  /** Successful reviews in a row. */
+  reps: number;
+  /** Times failed after having progressed. */
+  lapses: number;
 }

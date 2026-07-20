@@ -1,4 +1,5 @@
 import { cardAtPosition, DECK_SIZE } from '../../data/mnemonica';
+import { isDue, isNewOrLearning } from '../../db/schedule';
 import type { CardStat, QueueStrategy, ScopeConfig, TrainingMode } from '../../db/types';
 
 export interface Chunk {
@@ -162,15 +163,123 @@ export function buildDynamicQueue(
   return queue.slice(0, target);
 }
 
+export interface DueCounts {
+  /** In-scope cards that are due now (including never reviewed). */
+  due: number;
+  /** In-scope cards still in learning (interval 0), whether or not due. */
+  learning: number;
+  /** In-scope cards with a future due date. */
+  scheduled: number;
+}
+
+/** Count due / learning / scheduled cards for the current mode + scope. */
+export function countDueInScope(
+  positions: number[],
+  stats: CardStat[],
+  mode: TrainingMode,
+  now = Date.now(),
+): DueCounts {
+  const byCode = new Map(stats.filter((s) => s.mode === mode).map((s) => [s.code, s]));
+  let due = 0;
+  let learning = 0;
+  let scheduled = 0;
+
+  for (const position of positions) {
+    const code = cardAtPosition(position).code;
+    const stat = byCode.get(code);
+    if (isDue(stat, now)) due += 1;
+    if (isNewOrLearning(stat)) learning += 1;
+    else if (stat && (stat.dueAt ?? 0) > now) scheduled += 1;
+  }
+
+  return { due, learning, scheduled };
+}
+
+/**
+ * Spaced queue: overdue first (oldest dueAt), then top up with unseen/learning
+ * only. Never pulls healthy future-due cards early.
+ */
+export function buildSpacedQueue(
+  positions: number[],
+  sessionLength: number | 'all',
+  stats: CardStat[],
+  mode: TrainingMode,
+  now = Date.now(),
+): number[] {
+  if (positions.length === 0) return [];
+
+  const byCode = new Map(stats.filter((s) => s.mode === mode).map((s) => [s.code, s]));
+
+  const due: { position: number; dueAt: number }[] = [];
+  for (const position of positions) {
+    const code = cardAtPosition(position).code;
+    const stat = byCode.get(code);
+    if (isDue(stat, now)) {
+      due.push({ position, dueAt: stat?.dueAt ?? 0 });
+    }
+  }
+
+  // Oldest due first; shuffle equal dueAt buckets for variety.
+  due.sort((a, b) => a.dueAt - b.dueAt || a.position - b.position);
+  const dueOrdered: number[] = [];
+  let i = 0;
+  while (i < due.length) {
+    const bucketAt = due[i].dueAt;
+    const bucket: number[] = [];
+    while (i < due.length && due[i].dueAt === bucketAt) {
+      bucket.push(due[i].position);
+      i += 1;
+    }
+    dueOrdered.push(...shuffle(bucket));
+  }
+
+  const target =
+    sessionLength === 'all'
+      ? dueOrdered.length
+      : Math.max(1, Math.floor(sessionLength));
+
+  // When nothing is due and length is 'all', return empty (nothing to review).
+  if (sessionLength === 'all') {
+    return dueOrdered;
+  }
+
+  const queue = dueOrdered.slice(0, target);
+  if (queue.length >= target) return queue;
+
+  // Top up only with never-seen / learning cards not already queued.
+  const queued = new Set(queue);
+  const fresh = positions.filter((p) => {
+    if (queued.has(p)) return false;
+    const code = cardAtPosition(p).code;
+    const stat = byCode.get(code);
+    return !stat || isNewOrLearning(stat);
+  });
+  const neverSeen = shuffle(fresh.filter((p) => !byCode.get(cardAtPosition(p).code)));
+  const otherLearning = shuffle(fresh.filter((p) => byCode.get(cardAtPosition(p).code)));
+
+  for (const p of [...neverSeen, ...otherLearning]) {
+    if (queue.length >= target) break;
+    if (queued.has(p)) continue;
+    queue.push(p);
+    queued.add(p);
+  }
+
+  return queue;
+}
+
 export function buildSessionQueue(
   positions: number[],
   sessionLength: number | 'all',
   strategy: QueueStrategy,
   stats: CardStat[],
   mode: TrainingMode,
+  now = Date.now(),
 ): number[] {
   if (strategy === 'dynamic') {
     return buildDynamicQueue(positions, sessionLength, stats, mode);
+  }
+  if (strategy === 'spaced') {
+    return buildSpacedQueue(positions, sessionLength, stats, mode, now);
   }
   return buildQueue(positions, sessionLength);
 }

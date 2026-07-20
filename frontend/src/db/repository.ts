@@ -1,7 +1,7 @@
+import { applyReviewSchedule, withScheduleDefaults } from './schedule';
 import { db } from './db';
 import { DEFAULT_SETTINGS } from './defaults';
 import type { AppSettings, AttemptResult, CardStat, SessionRecord } from './types';
-
 /**
  * Abstraction over persistence so a future remote/synced implementation (once
  * accounts exist) can replace the local IndexedDB store without touching the UI.
@@ -33,6 +33,7 @@ class DexieStatsRepository implements StatsRepository {
           ...(existing.stackScope ?? DEFAULT_SETTINGS.stackScope),
         },
         queueStrategy: existing.queueStrategy ?? DEFAULT_SETTINGS.queueStrategy,
+        flashPrompt: existing.flashPrompt ?? DEFAULT_SETTINGS.flashPrompt,
         theme: existing.theme ?? DEFAULT_SETTINGS.theme,
         soundEnabled: existing.soundEnabled ?? DEFAULT_SETTINGS.soundEnabled,
         soundVolume: existing.soundVolume ?? DEFAULT_SETTINGS.soundVolume,
@@ -58,7 +59,11 @@ class DexieStatsRepository implements StatsRepository {
   private async applyResults(results: AttemptResult[]): Promise<void> {
     for (const r of results) {
       const id = statId(r.mode, r.code);
-      const prev = await db.cardStats.get(id);
+      const raw = await db.cardStats.get(id);
+      const prev = raw
+        ? withScheduleDefaults(raw)
+        : undefined;
+      const schedule = applyReviewSchedule(prev, r.correct, r.timestamp);
       const next: CardStat = prev
         ? {
             ...prev,
@@ -66,8 +71,9 @@ class DexieStatsRepository implements StatsRepository {
             correct: prev.correct + (r.correct ? 1 : 0),
             totalTimeMs: prev.totalTimeMs + r.timeMs,
             lastSeen: r.timestamp,
+            ...schedule,
           }
-        : {
+        : withScheduleDefaults({
             id,
             mode: r.mode,
             code: r.code,
@@ -76,7 +82,8 @@ class DexieStatsRepository implements StatsRepository {
             correct: r.correct ? 1 : 0,
             totalTimeMs: r.timeMs,
             lastSeen: r.timestamp,
-          };
+            ...schedule,
+          });
       await db.cardStats.put(next);
     }
   }
