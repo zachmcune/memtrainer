@@ -1,10 +1,10 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { PlayingCard } from '../../components/PlayingCard';
 import { cardLabel } from '../../data/deck';
 import { cardAtPosition } from '../../data/mnemonica';
 import { repository } from '../../db/repository';
-import type { AttemptResult, SessionRecord } from '../../db/types';
+import { FLASH_PROMPT_MS, type AttemptResult, type SessionRecord } from '../../db/types';
 import { useSettings } from '../../state/SettingsContext';
 import {
   promptElapsedMs,
@@ -21,6 +21,9 @@ import { useSound } from '../../audio/useSound';
 /** Stored in attempt records when the user taps "I don't know". */
 export const IDK_ANSWER = '—';
 
+const AUTO_ADVANCE_MS = 450;
+const AUTO_ADVANCE_REDUCED_MS = 200;
+
 export function TrainingRunner() {
   const { runner } = useTrainingSession();
   if (!runner) {
@@ -29,10 +32,29 @@ export function TrainingRunner() {
   return <TrainingRunnerActive runner={runner} />;
 }
 
+function flashFieldsForPrompt(flashPrompt: boolean): Pick<
+  RunnerState,
+  'cueObscured' | 'flashDeadline' | 'flashPausedRemainingMs'
+> {
+  if (!flashPrompt) {
+    return {
+      cueObscured: false,
+      flashDeadline: null,
+      flashPausedRemainingMs: null,
+    };
+  }
+  return {
+    cueObscured: false,
+    flashDeadline: performance.now() + FLASH_PROMPT_MS,
+    flashPausedRemainingMs: null,
+  };
+}
+
 function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
   const { settings } = useSettings();
   const { patchRunner, togglePause, finishSession, quitSession } = useTrainingSession();
   const play = useSound();
+  const autoAdvanceRef = useRef<number | null>(null);
 
   const {
     queue,
@@ -49,14 +71,18 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
     scopePositions,
     redrilled,
     sessionStartedAt,
+    cueObscured,
+    flashDeadline,
   } = runner;
 
   const position = queue[idx];
   const card = position ? cardAtPosition(position) : null;
+  const inputsLocked =
+    paused || revealing || (settings.flashPrompt && !cueObscured && !revealing);
 
   const recordAttempt = useCallback(
     (userAnswer: string, correct: boolean, wasIdk = false) => {
-      if (revealing || paused || !card) return;
+      if (revealing || paused || !card || inputsLocked) return;
       const timeMs = promptElapsedMs(runner);
       const result: AttemptResult = {
         code: card.code,
@@ -75,11 +101,22 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
         revealing: true,
       });
     },
-    [revealing, paused, card, runner, mode, position, results, patchRunner, play],
+    [
+      revealing,
+      paused,
+      card,
+      inputsLocked,
+      runner,
+      mode,
+      position,
+      results,
+      patchRunner,
+      play,
+    ],
   );
 
   const submit = useCallback(() => {
-    if (revealing || paused || !card) return;
+    if (revealing || paused || !card || inputsLocked) return;
     if (mode === 'card-to-position') {
       if (!numStr) return;
       recordAttempt(numStr, Number(numStr) === position);
@@ -88,11 +125,23 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
       const userAnswer = `${rank}${suit}`;
       recordAttempt(userAnswer, userAnswer === card.code);
     }
-  }, [revealing, paused, card, mode, numStr, rank, suit, position, recordAttempt]);
+  }, [
+    revealing,
+    paused,
+    card,
+    inputsLocked,
+    mode,
+    numStr,
+    rank,
+    suit,
+    position,
+    recordAttempt,
+  ]);
 
   const submitDontKnow = useCallback(() => {
+    if (inputsLocked) return;
     recordAttempt(IDK_ANSWER, false, true);
-  }, [recordAttempt]);
+  }, [recordAttempt, inputsLocked]);
 
   const advance = useCallback(() => {
     if (paused) return;
@@ -115,6 +164,7 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
             rank: null,
             suit: null,
             ...resetPromptTimer(prev),
+            ...flashFieldsForPrompt(settings.flashPrompt),
           }));
           return;
         }
@@ -142,6 +192,7 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
       rank: null,
       suit: null,
       ...resetPromptTimer(prev),
+      ...flashFieldsForPrompt(settings.flashPrompt),
     }));
   }, [
     paused,
@@ -149,6 +200,7 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
     idx,
     queue.length,
     settings.redrillMissed,
+    settings.flashPrompt,
     redrilled,
     sessionStartedAt,
     mode,
@@ -158,9 +210,39 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
     play,
   ]);
 
+  // Complete flash → hide cue and start the answer timer.
+  useEffect(() => {
+    if (revealing || paused || flashDeadline == null) return;
+    const remaining = flashDeadline - performance.now();
+    const id = window.setTimeout(() => {
+      patchRunner((prev) => ({
+        cueObscured: true,
+        flashDeadline: null,
+        flashPausedRemainingMs: null,
+        ...resetPromptTimer(prev),
+      }));
+    }, Math.max(0, remaining));
+    return () => window.clearTimeout(id);
+  }, [flashDeadline, paused, revealing, patchRunner]);
+
+  // Auto-advance on correct answers.
+  useEffect(() => {
+    if (!revealing || !lastCorrect || paused) return;
+    const delay = settings.reducedMotion ? AUTO_ADVANCE_REDUCED_MS : AUTO_ADVANCE_MS;
+    autoAdvanceRef.current = window.setTimeout(() => {
+      advance();
+    }, delay);
+    return () => {
+      if (autoAdvanceRef.current != null) {
+        window.clearTimeout(autoAdvanceRef.current);
+        autoAdvanceRef.current = null;
+      }
+    };
+  }, [revealing, lastCorrect, paused, advance, settings.reducedMotion]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (paused) return;
+      if (paused || inputsLocked) return;
       if (e.key === 'Enter') {
         e.preventDefault();
         if (revealing) advance();
@@ -178,14 +260,15 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [paused, revealing, advance, submit, mode, numStr, patchRunner]);
+  }, [paused, inputsLocked, revealing, advance, submit, mode, numStr, patchRunner]);
 
   if (!card) {
     return <div className="empty">Nothing to train.</div>;
   }
 
   const progress = ((idx + (revealing ? 1 : 0)) / queue.length) * 100;
-  const inputsDisabled = paused || revealing;
+  const showCue = !settings.flashPrompt || !cueObscured || revealing;
+  const showFlashPlaceholder = settings.flashPrompt && cueObscured && !revealing;
 
   return (
     <div className={`trainer${paused ? ' trainer-paused' : ''}`}>
@@ -224,19 +307,31 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
       </div>
 
       <div className="prompt-area">
-        {mode === 'card-to-position' ? (
-          <PlayingCard card={card} width="clamp(112px, 22vh, 180px)" />
-        ) : (
-          <div className="position-badge">
-            {position}
-            <small>What card is at this position?</small>
+        {showFlashPlaceholder ? (
+          <div className="flash-placeholder" aria-live="polite">
+            <span className="flash-placeholder-mark">?</span>
+            <small>What was it?</small>
           </div>
+        ) : showCue ? (
+          mode === 'card-to-position' ? (
+            <PlayingCard card={card} width="clamp(112px, 22vh, 180px)" />
+          ) : (
+            <div className="position-badge">
+              {position}
+              <small>What card is at this position?</small>
+            </div>
+          )
+        ) : null}
+        {settings.flashPrompt && !cueObscured && !revealing && (
+          <p className="muted flash-hint">Memorize…</p>
         )}
       </div>
 
       {!revealing ? (
         <>
-          {mode === 'card-to-position' ? (
+          {inputsLocked ? (
+            <div className="flash-waiting muted">Answer unlocks after the flash</div>
+          ) : mode === 'card-to-position' ? (
             <>
               <input
                 className="answer-input"
@@ -245,7 +340,7 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
                 placeholder="—"
                 inputMode="none"
                 aria-label="Your answer"
-                disabled={inputsDisabled}
+                disabled={paused}
               />
               <NumberPad
                 onDigit={(d) =>
@@ -271,7 +366,7 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
             type="button"
             className="btn ghost idk-btn"
             onClick={submitDontKnow}
-            disabled={paused}
+            disabled={paused || inputsLocked}
           >
             I don&apos;t know
           </button>
@@ -298,14 +393,19 @@ function TrainingRunnerActive({ runner }: { runner: RunnerState }) {
               </div>
             )}
           </div>
-          <button
-            className="btn primary block"
-            onClick={advance}
-            style={{ maxWidth: 360 }}
-            disabled={paused}
-          >
-            {idx >= queue.length - 1 ? 'Finish' : 'Next'}
-          </button>
+          {!lastCorrect && (
+            <button
+              className="btn primary block"
+              onClick={advance}
+              style={{ maxWidth: 360 }}
+              disabled={paused}
+            >
+              {idx >= queue.length - 1 ? 'Finish' : 'Next'}
+            </button>
+          )}
+          {lastCorrect && (
+            <p className="muted auto-advance-hint">Next…</p>
+          )}
         </>
       )}
 
@@ -333,6 +433,7 @@ export function buildInitialRunnerState(
   queue: number[],
   mode: RunnerState['mode'],
   scopePositions: number[],
+  flashPrompt = false,
 ): RunnerState {
   const now = performance.now();
   return {
@@ -353,6 +454,7 @@ export function buildInitialRunnerState(
     redrilled: false,
     mode,
     scopePositions,
+    ...flashFieldsForPrompt(flashPrompt),
   };
 }
 

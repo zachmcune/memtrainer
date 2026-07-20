@@ -2,11 +2,19 @@ import assert from 'node:assert';
 import {
   buildDynamicQueue,
   buildQueue,
+  buildSpacedQueue,
   computeChunks,
   computePositionWeights,
+  countDueInScope,
   resolveScopePositions,
   weaknessWeight,
 } from '../src/features/training/engine';
+import {
+  applyReviewSchedule,
+  DEFAULT_EASE,
+  MS_PER_DAY,
+  withScheduleDefaults,
+} from '../src/db/schedule';
 import { positionOf, cardAtPosition, DECK_SIZE, stackGroupPositions } from '../src/data/mnemonica';
 import { rankCardStats, summarizeSession, computeStreak } from '../src/features/stats/compute';
 import { isRemoteNewer, isSameBuild } from '../src/version';
@@ -53,7 +61,7 @@ const q = buildQueue([1, 2, 3, 4, 5], 5);
 assert.deepEqual([...q].sort((a, b) => a - b), [1, 2, 3, 4, 5]);
 
 // Dynamic queue weights weak cards higher
-const weakStat: CardStat = {
+const weakStat: CardStat = withScheduleDefaults({
   id: 'card-to-position__2H',
   mode: 'card-to-position',
   code: '2H',
@@ -62,8 +70,8 @@ const weakStat: CardStat = {
   correct: 2,
   totalTimeMs: 10000,
   lastSeen: 1,
-};
-const strongStat: CardStat = {
+});
+const strongStat: CardStat = withScheduleDefaults({
   id: 'card-to-position__4C',
   mode: 'card-to-position',
   code: '4C',
@@ -72,7 +80,7 @@ const strongStat: CardStat = {
   correct: 9,
   totalTimeMs: 5000,
   lastSeen: 1,
-};
+});
 assert.ok(weaknessWeight(weakStat) > weaknessWeight(strongStat));
 
 const weights = computePositionWeights([1, 2], [weakStat, strongStat], 'card-to-position');
@@ -87,6 +95,72 @@ assert.deepEqual([...dynamic].sort((a, b) => a - b), [1, 2]);
 const ranked = rankCardStats([weakStat, strongStat], 'card-to-position');
 assert.equal(ranked[0].code, '4C');
 assert.equal(ranked[1].code, '2H');
+
+// Spaced review schedule
+const t0 = 1_700_000_000_000;
+const firstCorrect = applyReviewSchedule(undefined, true, t0);
+assert.equal(firstCorrect.intervalDays, 1);
+assert.equal(firstCorrect.dueAt, t0 + MS_PER_DAY);
+assert.equal(firstCorrect.ease, DEFAULT_EASE);
+
+const secondCorrect = applyReviewSchedule(firstCorrect, true, t0 + MS_PER_DAY);
+assert.equal(secondCorrect.intervalDays, Math.round(1 * DEFAULT_EASE));
+assert.ok(secondCorrect.ease > firstCorrect.ease);
+assert.equal(secondCorrect.dueAt, t0 + MS_PER_DAY + secondCorrect.intervalDays * MS_PER_DAY);
+
+const afterMiss = applyReviewSchedule(secondCorrect, false, t0 + 2 * MS_PER_DAY);
+assert.equal(afterMiss.intervalDays, 0);
+assert.equal(afterMiss.dueAt, t0 + 2 * MS_PER_DAY);
+assert.ok(afterMiss.ease < secondCorrect.ease);
+assert.equal(afterMiss.lapses, 1);
+
+// Spaced queue: only due cards; never pull future-due early
+const nowTs = t0 + 3 * MS_PER_DAY;
+const dueStat = withScheduleDefaults({
+  id: 'card-to-position__2H',
+  mode: 'card-to-position',
+  code: '2H',
+  position: 2,
+  attempts: 2,
+  correct: 1,
+  totalTimeMs: 1000,
+  lastSeen: nowTs,
+  dueAt: nowTs - 1000,
+  intervalDays: 1,
+  ease: DEFAULT_EASE,
+  reps: 1,
+  lapses: 0,
+});
+const futureStat = withScheduleDefaults({
+  id: 'card-to-position__4C',
+  mode: 'card-to-position',
+  code: '4C',
+  position: 1,
+  attempts: 3,
+  correct: 3,
+  totalTimeMs: 1000,
+  lastSeen: nowTs,
+  dueAt: nowTs + 5 * MS_PER_DAY,
+  intervalDays: 5,
+  ease: DEFAULT_EASE,
+  reps: 3,
+  lapses: 0,
+});
+const spaced = buildSpacedQueue([1, 2, 3], 'all', [dueStat, futureStat], 'card-to-position', nowTs);
+assert.equal(spaced.length, 2);
+assert.ok(spaced.includes(2));
+assert.ok(spaced.includes(3));
+assert.ok(!spaced.includes(1));
+// New cards (dueAt 0) sort before overdue cards with later dueAt
+assert.equal(spaced[0], 3);
+
+const spacedCounts = countDueInScope([1, 2, 3], [dueStat, futureStat], 'card-to-position', nowTs);
+assert.equal(spacedCounts.due, 2); // 2 due + 3 new
+assert.equal(spacedCounts.scheduled, 1);
+
+const spacedLen = buildSpacedQueue([1, 2, 3], 10, [dueStat, futureStat], 'card-to-position', nowTs);
+assert.ok(spacedLen.length >= 2);
+assert.ok(!spacedLen.includes(1));
 
 // Session summary
 const results: AttemptResult[] = [

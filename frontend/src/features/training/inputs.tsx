@@ -1,6 +1,9 @@
 import { RANKS, SUITS, SUIT_SYMBOLS, isRedSuit, type Rank, type Suit } from '../../data/deck';
 import { useSound } from '../../audio/useSound';
 
+const NUMBER_RANKS = RANKS.filter((r) => r !== 'J' && r !== 'Q' && r !== 'K');
+const FACE_RANKS: Rank[] = ['J', 'Q', 'K'];
+
 export function NumberPad({
   onDigit,
   onBackspace,
@@ -82,27 +85,8 @@ export function CardPicker({
       </div>
 
       <div className="picker-section">
-        <span className="picker-label">Rank</span>
-        <div className="rank-grid">
-          {RANKS.map((r) => (
-            <button
-              key={r}
-              type="button"
-              className={rank === r ? 'chosen' : ''}
-              onClick={() => {
-                play('key');
-                onRank(r);
-              }}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="picker-section">
         <span className="picker-label">Suit</span>
-        <div className="suit-grid">
+        <div className="suit-grid suit-grid-large">
           {SUITS.map((s) => (
             <button
               key={s}
@@ -120,13 +104,47 @@ export function CardPicker({
         </div>
       </div>
 
+      <div className="picker-section">
+        <span className="picker-label">Rank</span>
+        <div className="rank-grid rank-grid-numbers">
+          {NUMBER_RANKS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              className={rank === r ? 'chosen' : ''}
+              onClick={() => {
+                play('key');
+                onRank(r);
+              }}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+        <div className="rank-grid rank-grid-faces">
+          {FACE_RANKS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              className={rank === r ? 'chosen' : ''}
+              onClick={() => {
+                play('key');
+                onRank(r);
+              }}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <button
         type="button"
         className="btn primary block picker-submit"
         disabled={!ready}
         onClick={onSubmit}
       >
-        {ready ? 'Submit' : 'Pick a rank & suit'}
+        {ready ? 'Submit' : 'Pick a suit & rank'}
       </button>
     </div>
   );

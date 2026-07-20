@@ -31,6 +31,12 @@ export interface RunnerState {
   redrilled: boolean;
   mode: TrainingMode;
   scopePositions: number[];
+  /** When flash prompt is on: cue is hidden and answering is unlocked after the flash. */
+  cueObscured: boolean;
+  /** performance.now() deadline for the flash, or null when not flashing / flash done. */
+  flashDeadline: number | null;
+  /** Remaining flash ms while paused mid-flash. */
+  flashPausedRemainingMs: number | null;
 }
 
 type TrainingSessionContextValue = {
@@ -50,19 +56,33 @@ const TrainingSessionContext = createContext<TrainingSessionContextValue | null>
 
 function pauseRunner(runner: RunnerState): RunnerState {
   if (runner.paused) return runner;
-  return { ...runner, paused: true, pauseStartedAt: performance.now() };
+  const next: RunnerState = {
+    ...runner,
+    paused: true,
+    pauseStartedAt: performance.now(),
+  };
+  if (runner.flashDeadline != null) {
+    next.flashPausedRemainingMs = Math.max(0, runner.flashDeadline - performance.now());
+    next.flashDeadline = null;
+  }
+  return next;
 }
 
 function resumeRunner(runner: RunnerState): RunnerState {
   if (!runner.paused || runner.pauseStartedAt == null) {
     return { ...runner, paused: false, pauseStartedAt: null };
   }
-  return {
+  const next: RunnerState = {
     ...runner,
     paused: false,
     pausedMs: runner.pausedMs + (performance.now() - runner.pauseStartedAt),
     pauseStartedAt: null,
   };
+  if (runner.flashPausedRemainingMs != null) {
+    next.flashDeadline = performance.now() + runner.flashPausedRemainingMs;
+    next.flashPausedRemainingMs = null;
+  }
+  return next;
 }
 
 export function TrainingSessionProvider({ children }: { children: ReactNode }) {

@@ -1,9 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../../db/db';
 import { QUEUE_STRATEGIES, TRAINING_MODES } from '../../db/types';
 import { useSettings } from '../../state/SettingsContext';
-import { resolveScopePositions } from '../training/engine';
+import { countDueInScope, resolveScopePositions } from '../training/engine';
 import { accuracyColor, computeStreak, summarizeHistory } from '../stats/compute';
 import { isIos, isStandalone } from '../../pwa/install';
 import { useCountUp } from '../../hooks/useCountUp';
@@ -15,7 +16,11 @@ export function HomePage() {
   const sessions = useLiveQuery(() => db.sessions.toArray(), [], undefined);
   const cardStats = useLiveQuery(() => db.cardStats.toArray(), [], undefined);
 
-  const scopeCount = resolveScopePositions(settings.scope).length;
+  const scopePositions = useMemo(
+    () => resolveScopePositions(settings.scope),
+    [settings.scope],
+  );
+  const scopeCount = scopePositions.length;
   const modeInfo = TRAINING_MODES.find((m) => m.value === settings.mode)!;
   const queueInfo = QUEUE_STRATEGIES.find((s) => s.value === settings.queueStrategy)!;
   const streak = sessions ? computeStreak(sessions) : 0;
@@ -24,6 +29,12 @@ export function HomePage() {
     sessions && cardStats ? summarizeHistory(sessions, cardStats) : null;
   const accuracyPct = history ? Math.round(history.overallAccuracy * 100) : 0;
   const accuracyAnimated = useCountUp(accuracyPct);
+
+  const dueCount =
+    cardStats !== undefined
+      ? countDueInScope(scopePositions, cardStats, settings.mode).due
+      : null;
+  const dueAnimated = useCountUp(dueCount ?? 0);
 
   const showInstallHint = isIos() && !isStandalone();
 
@@ -47,11 +58,23 @@ export function HomePage() {
             </div>
             <div className="muted">day streak</div>
           </div>
+          {dueCount !== null && (
+            <div className="center">
+              <div className="hero-stat" style={{ fontSize: 30, fontWeight: 800 }}>
+                {dueAnimated}
+              </div>
+              <div className="muted">due now</div>
+            </div>
+          )}
           {history && history.totalSessions > 0 && (
             <div className="center">
               <div
                 className="hero-stat"
-                style={{ fontSize: 30, fontWeight: 800, color: accuracyColor(history.overallAccuracy) }}
+                style={{
+                  fontSize: 30,
+                  fontWeight: 800,
+                  color: accuracyColor(history.overallAccuracy),
+                }}
               >
                 {accuracyAnimated}%
               </div>
@@ -67,7 +90,7 @@ export function HomePage() {
         style={{ marginTop: 6 }}
         onClick={() => play('tap')}
       >
-        Start training
+        {dueCount !== null && dueCount > 0 ? `Review ${dueCount} due` : 'Start training'}
       </Link>
 
       <div className="card-panel" style={{ marginTop: 14 }}>
@@ -83,6 +106,12 @@ export function HomePage() {
           <span className="muted">Queue</span>
           <span className="pill">{queueInfo.label}</span>
         </div>
+        {dueCount !== null && (
+          <div className="row spread" style={{ marginTop: 10 }}>
+            <span className="muted">Due now</span>
+            <span className="pill">{dueCount}</span>
+          </div>
+        )}
         <Link to="/settings" className="btn ghost block" style={{ marginTop: 14 }}>
           Change what you study
         </Link>

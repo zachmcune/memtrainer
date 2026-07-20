@@ -933,8 +933,19 @@ input:focus {
   max-width: 360px;
 }
 
+.rank-grid-numbers {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.rank-grid-faces {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .rank-grid button {
-  padding: clamp(8px, 1.4vh, 12px) 0;
+  padding: clamp(10px, 1.6vh, 14px) 0;
   font-size: 16px;
   font-weight: 700;
   border-radius: 10px;
@@ -942,6 +953,7 @@ input:focus {
   background: var(--surface-2);
   color: var(--text);
   transition: transform 0.1s var(--ease-out), all 0.2s ease;
+  min-height: 44px;
 }
 
 .rank-grid button:active {
@@ -961,6 +973,12 @@ input:focus {
   gap: 8px;
   width: 100%;
   max-width: 360px;
+}
+
+.suit-grid-large button {
+  padding: clamp(14px, 2.2vh, 20px) 0;
+  font-size: clamp(28px, 4.2vh, 34px);
+  min-height: 56px;
 }
 
 .suit-grid button {
@@ -1041,6 +1059,49 @@ input:focus {
 
 .picker-submit {
   margin-top: 2px;
+}
+
+.flash-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: clamp(112px, 22vh, 180px);
+  aspect-ratio: 5 / 7;
+  border-radius: var(--radius);
+  border: 1px dashed color-mix(in srgb, var(--border) 80%, var(--accent) 20%);
+  background: color-mix(in srgb, var(--surface-2) 88%, transparent);
+}
+
+.flash-placeholder-mark {
+  font-size: clamp(36px, 7vh, 52px);
+  font-weight: 800;
+  color: var(--text-faint);
+  line-height: 1;
+}
+
+.flash-placeholder small {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+.flash-hint {
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.flash-waiting {
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.auto-advance-hint {
+  margin-top: 8px;
+  font-size: 13px;
+  text-align: center;
 }
 
 /* Feedback */
