@@ -21,8 +21,8 @@ import { useSound } from '../../audio/useSound';
 /** Stored in attempt records when the user taps "I don't know". */
 export const IDK_ANSWER = '—';
 
-const AUTO_ADVANCE_MS = 450;
-const AUTO_ADVANCE_REDUCED_MS = 200;
+const AUTO_ADVANCE_MS = 2800;
+const AUTO_ADVANCE_REDUCED_MS = 1600;
 
 export function TrainingRunner() {
   const { runner } = useTrainingSession();
