@@ -1,42 +1,27 @@
 import { cardAtPosition, DECK_SIZE } from '../../data/mnemonica';
+import { computeChunks } from '../../data/scopeChunks';
+import { normalizeScopeConfig } from '../../data/scopeNormalize';
 import { isDue, isNewOrLearning } from '../../db/schedule';
 import type { CardStat, QueueStrategy, ScopeConfig, TrainingMode } from '../../db/types';
 
-export interface Chunk {
-  index: number;
-  start: number;
-  end: number;
-  label: string;
-}
-
-/** Split the deck into chunks of `chunkSize` (last chunk may be smaller). */
-export function computeChunks(chunkSize: number): Chunk[] {
-  const size = Math.max(1, Math.min(DECK_SIZE, Math.floor(chunkSize) || 1));
-  const chunks: Chunk[] = [];
-  let index = 0;
-  for (let start = 1; start <= DECK_SIZE; start += size) {
-    const end = Math.min(start + size - 1, DECK_SIZE);
-    chunks.push({ index, start, end, label: `${start}\u2013${end}` });
-    index += 1;
-  }
-  return chunks;
-}
+export type { Chunk } from '../../data/scopeChunks';
+export { computeChunks } from '../../data/scopeChunks';
 
 /** Resolve a scope configuration into the concrete set of 1-based positions. */
 export function resolveScopePositions(scope: ScopeConfig): number[] {
-  if (scope.type === 'all') {
+  const normalized = normalizeScopeConfig(scope);
+
+  if (normalized.type === 'all') {
     return range(1, DECK_SIZE);
   }
-  if (scope.type === 'range') {
-    const lo = clamp(Math.min(scope.rangeStart, scope.rangeEnd), 1, DECK_SIZE);
-    const hi = clamp(Math.max(scope.rangeStart, scope.rangeEnd), 1, DECK_SIZE);
+  if (normalized.type === 'range') {
+    const lo = clamp(Math.min(normalized.rangeStart, normalized.rangeEnd), 1, DECK_SIZE);
+    const hi = clamp(Math.max(normalized.rangeStart, normalized.rangeEnd), 1, DECK_SIZE);
     return range(lo, hi);
   }
   // chunks
-  const chunks = computeChunks(scope.chunkSize);
-  const selected = scope.selectedChunks.length
-    ? scope.selectedChunks
-    : [0];
+  const chunks = computeChunks(normalized.chunkSize);
+  const selected = normalized.selectedChunks;
   const positions = new Set<number>();
   for (const ci of selected) {
     const chunk = chunks[ci];

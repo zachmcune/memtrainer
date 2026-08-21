@@ -1,4 +1,5 @@
 import { computeChunks } from '../features/training/engine';
+import { normalizeScopeConfig, remapChunkSelection } from '../data/scopeNormalize';
 import type { ScopeConfig, ScopeType } from '../db/types';
 
 interface ScopeControlsProps {
@@ -12,13 +13,31 @@ export function ScopeControls({ scope, onChange, idPrefix = '' }: ScopeControlsP
   const chunks = computeChunks(scope.chunkSize);
   const id = (name: string) => `${idPrefix}${name}`;
 
-  const setScopeType = (type: ScopeType) => onChange({ ...scope, type });
+  const setScopeType = (type: ScopeType) => onChange(normalizeScopeConfig({ ...scope, type }));
 
   const toggleChunk = (index: number) => {
     const selected = new Set(scope.selectedChunks);
-    if (selected.has(index)) selected.delete(index);
-    else selected.add(index);
-    onChange({ ...scope, selectedChunks: [...selected].sort((a, b) => a - b) });
+    if (selected.has(index)) {
+      if (selected.size <= 1) return;
+      selected.delete(index);
+    } else {
+      selected.add(index);
+    }
+    onChange(
+      normalizeScopeConfig({
+        ...scope,
+        selectedChunks: [...selected].sort((a, b) => a - b),
+      }),
+    );
+  };
+
+  const selectAllChunks = () => {
+    onChange(
+      normalizeScopeConfig({
+        ...scope,
+        selectedChunks: chunks.map((c) => c.index),
+      }),
+    );
   };
 
   return (
@@ -43,13 +62,16 @@ export function ScopeControls({ scope, onChange, idPrefix = '' }: ScopeControlsP
             <select
               id={id('chunkSize')}
               value={scope.chunkSize}
-              onChange={(e) =>
-                onChange({
-                  ...scope,
-                  chunkSize: Number(e.target.value),
-                  selectedChunks: [0],
-                })
-              }
+              onChange={(e) => {
+                const chunkSize = Number(e.target.value);
+                onChange(
+                  normalizeScopeConfig({
+                    ...scope,
+                    chunkSize,
+                    selectedChunks: remapChunkSelection(scope, chunkSize),
+                  }),
+                );
+              }}
             >
               {[4, 5, 7, 10, 13, 17, 26].map((n) => (
                 <option key={n} value={n}>
@@ -57,6 +79,12 @@ export function ScopeControls({ scope, onChange, idPrefix = '' }: ScopeControlsP
                 </option>
               ))}
             </select>
+          </div>
+          <div className="row spread" style={{ marginBottom: 10 }}>
+            <span className="muted">Sections</span>
+            <button type="button" className="btn ghost" onClick={selectAllChunks}>
+              Select all
+            </button>
           </div>
           <div className="chunk-grid">
             {chunks.map((c) => (

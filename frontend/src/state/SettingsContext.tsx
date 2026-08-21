@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { repository } from '../db/repository';
 import { DEFAULT_SETTINGS } from '../db/defaults';
+import { normalizeScopeConfig } from '../data/scopeNormalize';
 import type { AppSettings } from '../db/types';
 
 interface SettingsContextValue {
@@ -40,6 +41,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     async (patch: Partial<AppSettings>) => {
       setSettings((prev) => {
         const next = { ...prev, ...patch, id: 'app' as const };
+        if (patch.scope) {
+          next.scope = normalizeScopeConfig(next.scope);
+        }
+        if (patch.stackScope) {
+          next.stackScope = normalizeScopeConfig(next.stackScope);
+        }
         void repository.saveSettings(next);
         return next;
       });

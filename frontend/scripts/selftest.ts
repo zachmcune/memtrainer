@@ -18,6 +18,7 @@ import {
 import { positionOf, cardAtPosition, DECK_SIZE, stackGroupPositions } from '../src/data/mnemonica';
 import { rankCardStats, summarizeSession, computeStreak } from '../src/features/stats/compute';
 import { isRemoteNewer, isSameBuild } from '../src/version';
+import { normalizeScopeConfig, remapChunkSelection } from '../src/data/scopeNormalize';
 import type { AttemptResult, CardStat, ScopeConfig, SessionRecord } from '../src/db/types';
 
 // Deck data
@@ -52,6 +53,33 @@ assert.deepEqual(
 assert.deepEqual(resolveScopePositions({ ...base, type: 'range', rangeStart: 10, rangeEnd: 20 }).length, 11);
 // reversed range is normalized
 assert.deepEqual(resolveScopePositions({ ...base, type: 'range', rangeStart: 20, rangeEnd: 10 }).length, 11);
+
+// Stale chunk indices after section resize resolve to overlapping cards, not zero.
+const tailScope: ScopeConfig = {
+  ...base,
+  type: 'chunks',
+  chunkSize: 13,
+  selectedChunks: [2, 3],
+};
+assert.equal(resolveScopePositions(tailScope).length, 26);
+assert.equal(
+  resolveScopePositions(normalizeScopeConfig({ ...tailScope, chunkSize: 26 })).length,
+  26,
+);
+assert.deepEqual(remapChunkSelection(tailScope, 26).sort(), [1]);
+assert.equal(
+  resolveScopePositions({
+    ...tailScope,
+    chunkSize: 26,
+    selectedChunks: remapChunkSelection(tailScope, 26),
+  }).length,
+  26,
+);
+// Invalid-only indices recover overlapping sections instead of an empty scope.
+assert.equal(
+  resolveScopePositions({ ...base, type: 'chunks', chunkSize: 26, selectedChunks: [9, 10] }).length,
+  26,
+);
 
 // Queue
 assert.equal(buildQueue([1, 2, 3], 'all').length, 3);
