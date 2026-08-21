@@ -1,3 +1,4 @@
+import { normalizeScopeConfig } from '../data/scopeNormalize';
 import { applyReviewSchedule, withScheduleDefaults } from './schedule';
 import { db } from './db';
 import { DEFAULT_SETTINGS } from './defaults';
@@ -27,11 +28,14 @@ class DexieStatsRepository implements StatsRepository {
       return {
         ...DEFAULT_SETTINGS,
         ...existing,
-        scope: { ...DEFAULT_SETTINGS.scope, ...existing.scope },
-        stackScope: {
+        scope: normalizeScopeConfig({
+          ...DEFAULT_SETTINGS.scope,
+          ...existing.scope,
+        }),
+        stackScope: normalizeScopeConfig({
           ...DEFAULT_SETTINGS.stackScope,
           ...(existing.stackScope ?? DEFAULT_SETTINGS.stackScope),
-        },
+        }),
         queueStrategy: existing.queueStrategy ?? DEFAULT_SETTINGS.queueStrategy,
         flashPrompt: existing.flashPrompt ?? DEFAULT_SETTINGS.flashPrompt,
         theme: existing.theme ?? DEFAULT_SETTINGS.theme,
