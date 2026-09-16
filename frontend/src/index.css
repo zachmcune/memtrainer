@@ -9,6 +9,8 @@
   --radius: 16px;
   --radius-sm: 11px;
   --radius-pill: 999px;
+  --picker-key: 52px;
+  --keypad-key: 64px;
   --nav-h: 66px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -886,20 +888,21 @@ input:focus {
 /* Keypad */
 .keypad {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(6px, 1.2vh, 10px);
+  grid-template-columns: repeat(3, var(--keypad-key));
+  justify-content: center;
+  gap: 10px;
   width: 100%;
-  max-width: 320px;
+  max-width: 360px;
 }
 
 .keypad button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  min-height: 52px;
+  width: var(--keypad-key);
+  height: var(--keypad-key);
   padding: 0;
-  font-size: clamp(18px, 2.4vh, 22px);
+  font-size: 22px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   border-radius: var(--radius-sm);
@@ -935,21 +938,19 @@ input:focus {
 /* Card picker */
 .rank-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(7, var(--picker-key));
+  justify-content: center;
+  gap: 8px;
   width: 100%;
-  max-width: 360px;
 }
 
 .rank-grid-numbers {
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(5, var(--picker-key));
 }
 
 .rank-grid-faces {
-  /* Same 5-column track as the number row so J/Q/K are not extra-wide. */
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  /* Same 5-column track as the number row so J/Q/K stay the same size. */
+  grid-template-columns: repeat(5, var(--picker-key));
   margin-top: 8px;
 }
 
@@ -961,8 +962,8 @@ input:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  min-height: 48px;
+  width: var(--picker-key);
+  height: var(--picker-key);
   padding: 0;
   font-size: 16px;
   font-weight: 700;
@@ -986,18 +987,18 @@ input:focus {
 
 .suit-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, var(--picker-key));
+  justify-content: center;
   gap: 8px;
   width: 100%;
-  max-width: 360px;
 }
 
 .suit-grid button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  min-height: 48px;
+  width: var(--picker-key);
+  height: var(--picker-key);
   padding: 0;
   font-size: 26px;
   border-radius: var(--radius-sm);
@@ -1007,8 +1008,7 @@ input:focus {
 }
 
 .suit-grid-large button {
-  min-height: 56px;
-  font-size: clamp(26px, 4vh, 32px);
+  font-size: 28px;
 }
 
 .suit-grid button:active {
@@ -2022,6 +2022,13 @@ input:focus {
   }
   80% {
     transform: translateX(3px);
+  }
+}
+
+@media (max-width: 360px) {
+  :root {
+    --picker-key: 46px;
+    --keypad-key: 56px;
   }
 }
 
