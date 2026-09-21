@@ -117,9 +117,9 @@ class SoundEngine {
         break;
       case 'flourish':
         this.whoosh();
-        this.noise(0.07, 0.24, 1700, 0.86);
+        this.noise(0.07, 0.24, 1700, 0.9);
         this.tones(
-          [{ freq: 920, at: 0.88, dur: 0.05, type: 'triangle', gain: 0.4 }],
+          [{ freq: 920, at: 0.92, dur: 0.05, type: 'triangle', gain: 0.4 }],
           0.16,
         );
         break;

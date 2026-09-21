@@ -5,8 +5,10 @@ import { DECK_SIZE, cardAtPosition } from '../../data/mnemonica';
 import { useSound } from '../../audio/useSound';
 import { shuffledPacket, takeRandomCard } from './draw';
 
-const FLOURISH_MS = 1080;
+const FLOURISH_MS = 1120;
 const LAYER_COUNT = 8;
+/** Pixels of edge visible between packet cards, so the deck reads as a deck. */
+const LAYER_STEP = 4.6;
 
 type Phase = 'idle' | 'shooting' | 'shown';
 
@@ -29,6 +31,13 @@ function cubic(t: number, p0: number, p1: number, p2: number, p3: number): numbe
 
 function easeOutCubic(t: number): number {
   return 1 - (1 - t) ** 3;
+}
+
+/** Spin hard through the toss, then ease the last bit so the face lands square. */
+function spinProgress(t: number): number {
+  if (t < 0.72) return (t / 0.72) * 0.9;
+  const u = (t - 0.72) / 0.28;
+  return 0.9 + 0.1 * easeOutCubic(u);
 }
 
 function place(x: number, y: number, z: number, rot: number, scale: number): string {
@@ -128,33 +137,31 @@ export function DealPage() {
     const endY = landRect.top + landRect.height / 2 - stageRect.top;
     const startScale = Math.max(0.42, Math.min(0.92, originRect.width / Math.max(1, landRect.width)));
     const dir = Math.random() < 0.5 ? -1 : 1;
-    const room = Math.max(28, stageRect.width / 2 - landRect.width * 0.72);
-    const side = dir * Math.min(room, 42 + Math.random() * 28);
+    const room = Math.max(36, stageRect.width / 2 - landRect.width * 0.62);
+    const side = dir * Math.min(room, 64 + Math.random() * 28);
     const endZ = dir * 360;
-    const lift = 28 + Math.random() * 22;
+    const lift = 36 + Math.random() * 20;
 
-    const samples = [0, 0.1, 0.24, 0.42, 0.6, 0.76, 0.9, 1];
+    const samples = [0, 0.08, 0.18, 0.34, 0.52, 0.7, 0.86, 1];
     const travelFrames = samples.map((t) => {
-      const x = cubic(t, startX, startX + dir * 16, startX + side, endX);
-      const y = cubic(t, startY, startY + 18, endY - lift, endY);
-      const spun = easeOutCubic(t);
+      // Launch up and out immediately, then arc back into the slot.
+      const x = cubic(t, startX, startX + dir * 78, startX + side, endX);
+      const y = cubic(t, startY, startY - 130, endY - lift, endY);
+      const spun = spinProgress(t);
       let scale: number;
-      if (t < 0.74) scale = startScale + (1.05 - startScale) * easeOutCubic(t / 0.74);
-      else scale = 1.05 + (1 - 1.05) * ((t - 0.74) / 0.26);
+      if (t < 0.7) scale = startScale + (1.06 - startScale) * easeOutCubic(t / 0.7);
+      else scale = 1.06 + (1 - 1.06) * ((t - 0.7) / 0.3);
       return {
-        transform: place(x, y, Math.sin(Math.PI * t) * 72, endZ * spun, scale),
+        transform: place(x, y, Math.sin(Math.PI * t) * 90, endZ * spun, scale),
         offset: t,
       };
     });
 
-    // 900° = 2.5 turns. The face is pre-rotated 180°, so this lands face up.
-    const flipFrames = samples.map((t) => {
-      const spun = easeOutCubic(t);
-      return {
-        transform: `rotateX(${Math.sin(Math.PI * t) * 16}deg) rotateY(${900 * spun}deg)`,
-        offset: t,
-      };
-    });
+    // 1260° = 3.5 turns. The face is pre-rotated 180°, so this lands face up.
+    const flipFrames = samples.map((t) => ({
+      transform: `rotateX(${Math.sin(Math.PI * t) * 22}deg) rotateY(${1260 * spinProgress(t)}deg)`,
+      offset: t,
+    }));
 
     flyer.style.width = `${landRect.width}px`;
     flyer.style.visibility = 'visible';
@@ -260,18 +267,22 @@ export function DealPage() {
             {visibleDepth === 0 ? (
               <span className="flourish-empty-deck">Empty</span>
             ) : (
-              Array.from({ length: visibleDepth }, (_, i) => (
-                <span
-                  key={i}
-                  className="flourish-layer"
-                  style={{
-                    zIndex: i + 1,
-                    transform: `translateY(${(visibleDepth - 1 - i) * 1.7}px)`,
-                  }}
-                >
-                  <CardBack width="100%" />
-                </span>
-              ))
+              Array.from({ length: visibleDepth }, (_, i) => {
+                const fromTop = visibleDepth - 1 - i;
+                const tuck = phase === 'shooting' ? LAYER_STEP : 0;
+                return (
+                  <span
+                    key={i}
+                    className="flourish-layer"
+                    style={{
+                      zIndex: i + 1,
+                      transform: `translate(${fromTop * -0.55}px, ${tuck + fromTop * LAYER_STEP}px)`,
+                    }}
+                  >
+                    <CardBack width="100%" />
+                  </span>
+                );
+              })
             )}
           </span>
         </button>
