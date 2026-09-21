@@ -16,6 +16,7 @@ Pages / Netlify).
 - **Configurable scope** — full deck, sections (chunks of a chosen size), or a custom
   position range.
 - **Authentic card faces** — real classic (CC0) SVG card art, not Unicode glyphs.
+- **Random card** — shoot a card out of the deck with a spin flourish. It lands face up with its Mnemonica number (and the cards beside it) for mem-deck tricks.
 - **Instant feedback** — wrong answers reveal the correct card; missed cards can be
   re-drilled at the end of a session.
 - **Rich stats** — per-session and lifetime accuracy, response times, section breakdown,

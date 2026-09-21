@@ -16,6 +16,7 @@ import {
   withScheduleDefaults,
 } from '../src/db/schedule';
 import { positionOf, cardAtPosition, DECK_SIZE, stackGroupPositions } from '../src/data/mnemonica';
+import { takeRandomCard } from '../src/features/deal/draw';
 import { rankCardStats, summarizeSession, computeStreak } from '../src/features/stats/compute';
 import { isRemoteNewer, isSameBuild } from '../src/version';
 import { normalizeScopeConfig, remapChunkSelection } from '../src/data/scopeNormalize';
@@ -36,6 +37,43 @@ assert.deepEqual(stackGroupPositions(5), [5, 6, 7, 8]);
 assert.deepEqual(stackGroupPositions(7), [5, 6, 7, 8]);
 assert.deepEqual(stackGroupPositions(13), [13, 14, 15, 16]);
 assert.deepEqual(stackGroupPositions(52), [49, 50, 51, 52]);
+
+// Random deal: no replacement, no immediate repeat, empty packet reshuffles.
+{
+  const first = takeRandomCard([4, 9, 12], null);
+  assert.equal(first.position, 4);
+  assert.deepEqual(first.rest, [9, 12]);
+  assert.equal(first.reshuffled, false);
+
+  const skipped = takeRandomCard([4, 9, 12], 4);
+  assert.equal(skipped.position, 9);
+  assert.deepEqual(skipped.rest, [4, 12]);
+
+  const only = takeRandomCard([7], 7);
+  assert.equal(only.position, 7);
+  assert.deepEqual(only.rest, []);
+  assert.equal(only.reshuffled, false);
+
+  const source = [1, 2, 3];
+  takeRandomCard(source, null);
+  assert.deepEqual(source, [1, 2, 3]);
+
+  let packet: number[] = [];
+  const seen = new Set<number>();
+  let avoid: number | null = null;
+  for (let i = 0; i < DECK_SIZE; i += 1) {
+    const draw = takeRandomCard(packet, avoid);
+    assert.equal(draw.reshuffled, i === 0);
+    assert.ok(draw.position >= 1 && draw.position <= DECK_SIZE);
+    assert.ok(!seen.has(draw.position));
+    assert.notEqual(draw.position, avoid);
+    seen.add(draw.position);
+    avoid = draw.position;
+    packet = draw.rest;
+  }
+  assert.equal(seen.size, DECK_SIZE);
+  assert.equal(packet.length, 0);
+}
 
 // Chunks
 const chunks = computeChunks(13);
