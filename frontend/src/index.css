@@ -2110,6 +2110,22 @@ html[data-motion='reduced'] *::after {
   --flourish-card: min(168px, 46vw);
 }
 
+.flourish-repeat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.flourish-repeat-title {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.switch input:disabled + .track {
+  opacity: 0.55;
+}
+
 .flourish-stage {
   position: relative;
   display: flex;

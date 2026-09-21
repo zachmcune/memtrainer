@@ -17,13 +17,28 @@ export interface Draw {
   reshuffled: boolean;
 }
 
+export interface DrawOptions {
+  /** Any card may come up, including ones already dealt. The packet is left as-is. */
+  repeat?: boolean;
+}
+
 /**
- * Deal the next position from a shuffled packet, without replacement.
- * An empty packet is replaced with a new shuffle first.
- * When the top card would repeat `avoid` and another card is available, the
- * next card is dealt instead so a reshuffle doesn't hand back the same card.
+ * Deal the next stack position.
+ * Without `repeat`, cards come from the shuffled packet with no replacement.
+ * An empty packet is replaced with a new shuffle first, and the top card is
+ * skipped when it would immediately repeat `avoid`.
+ * With `repeat`, every shot is a fresh pick from the whole deck.
  */
-export function takeRandomCard(packet: number[], avoid: number | null): Draw {
+export function takeRandomCard(
+  packet: number[],
+  avoid: number | null,
+  options?: DrawOptions,
+): Draw {
+  if (options?.repeat) {
+    const position = shuffledPacket()[0]!;
+    return { position, rest: packet, reshuffled: false };
+  }
+
   const reshuffled = packet.length === 0;
   const deck = reshuffled ? shuffledPacket() : packet;
   let index = 0;

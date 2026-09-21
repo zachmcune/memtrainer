@@ -51,13 +51,16 @@ export function DealPage() {
   const [flying, setFlying] = useState<number | null>(null);
   const [revealed, setRevealed] = useState<number | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
+  const [repeat, setRepeat] = useState(false);
 
   const packetRef = useRef(packet);
   const revealedRef = useRef(revealed);
   const phaseRef = useRef(phase);
+  const repeatRef = useRef(repeat);
   packetRef.current = packet;
   revealedRef.current = revealed;
   phaseRef.current = phase;
+  repeatRef.current = repeat;
 
   const stageRef = useRef<HTMLDivElement>(null);
   const landRef = useRef<HTMLDivElement>(null);
@@ -73,7 +76,9 @@ export function DealPage() {
 
   const shoot = useCallback(() => {
     if (phaseRef.current === 'shooting') return;
-    const drawn = takeRandomCard(packetRef.current, revealedRef.current);
+    const drawn = takeRandomCard(packetRef.current, revealedRef.current, {
+      repeat: repeatRef.current,
+    });
     packetRef.current = drawn.rest;
     phaseRef.current = 'shooting';
     setPacket(drawn.rest);
@@ -81,6 +86,19 @@ export function DealPage() {
     setPhase('shooting');
     setBanner(drawn.reshuffled ? 'Fresh shuffle' : null);
     play('flourish');
+  }, [play]);
+
+  const toggleRepeat = useCallback((next: boolean) => {
+    if (phaseRef.current === 'shooting') return;
+    repeatRef.current = next;
+    setRepeat(next);
+    if (!next) {
+      const fresh = shuffledPacket();
+      packetRef.current = fresh;
+      setPacket(fresh);
+      setBanner(null);
+    }
+    play('toggle');
   }, [play]);
 
   const reshuffle = useCallback(() => {
@@ -211,16 +229,37 @@ export function DealPage() {
     };
   }, [phase, flying]);
 
-  const depth = deckDepth(packet.length);
+  const depth = repeat ? LAYER_COUNT : deckDepth(packet.length);
   const visibleDepth = phase === 'shooting' ? Math.max(0, depth - 1) : depth;
   const revealedCard = revealed != null ? cardAtPosition(revealed) : null;
   const flyingCard = flying != null ? cardAtPosition(flying) : null;
-  const canReshuffle = revealed != null || packet.length < DECK_SIZE;
+  const canReshuffle = !repeat && (revealed != null || packet.length < DECK_SIZE);
 
   return (
     <div className="deal-page">
       <h1>Random card</h1>
       <p className="subtitle">Shoot one out of the deck. The stack number comes with it.</p>
+
+      <div className="card-panel flourish-repeat">
+        <div>
+          <div className="flourish-repeat-title">Repeat cards</div>
+          <div className="muted">
+            {repeat
+              ? 'Any card can come up again, including ones already shot.'
+              : 'Each card is dealt once, then the deck reshuffles.'}
+          </div>
+        </div>
+        <label className="switch">
+          <input
+            type="checkbox"
+            checked={repeat}
+            disabled={phase === 'shooting'}
+            onChange={(e) => toggleRepeat(e.target.checked)}
+            aria-label="Repeat cards"
+          />
+          <span className="track" />
+        </label>
+      </div>
 
       <div className="flourish-stage" ref={stageRef}>
         <div className="flourish-land" ref={landRef}>
@@ -250,7 +289,9 @@ export function DealPage() {
             <p className="muted flourish-prompt">
               {phase === 'shooting'
                 ? 'In the air…'
-                : 'Deals through the stack without repeats, then reshuffles.'}
+                : repeat
+                  ? 'Every shot can be any card in the stack.'
+                  : 'Deals through the stack without repeats, then reshuffles.'}
             </p>
           )}
         </div>
@@ -289,9 +330,11 @@ export function DealPage() {
 
         <p className="flourish-status muted">
           {banner ??
-            (packet.length === 0
-              ? 'Deck empty — next shot reshuffles'
-              : `${packet.length} left in the deck`)}
+            (repeat
+              ? 'Repeats allowed'
+              : packet.length === 0
+                ? 'Deck empty — next shot reshuffles'
+                : `${packet.length} left in the deck`)}
         </p>
 
         <div className="flourish-flyer" ref={flyerRef} aria-hidden>

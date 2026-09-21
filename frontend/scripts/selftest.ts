@@ -75,6 +75,22 @@ assert.deepEqual(stackGroupPositions(52), [49, 50, 51, 52]);
   assert.equal(packet.length, 0);
 }
 
+// Repeats leave the packet untouched and can draw any stack position.
+{
+  const packet = [4, 9, 12];
+  const draw = takeRandomCard(packet, 4, { repeat: true });
+  assert.equal(draw.reshuffled, false);
+  assert.deepEqual(draw.rest, [4, 9, 12]);
+  assert.deepEqual(packet, [4, 9, 12]);
+  assert.ok(draw.position >= 1 && draw.position <= DECK_SIZE);
+
+  const seen = new Set<number>();
+  for (let i = 0; i < 80; i += 1) {
+    seen.add(takeRandomCard(packet, null, { repeat: true }).position);
+  }
+  assert.ok(seen.size > 1);
+}
+
 // Chunks
 const chunks = computeChunks(13);
 assert.equal(chunks.length, 4);
