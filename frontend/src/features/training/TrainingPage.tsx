@@ -148,6 +148,13 @@ export function TrainingPage() {
       >
         Adjust settings
       </button>
+      <button
+        className="btn ghost block"
+        style={{ marginTop: 10 }}
+        onClick={() => navigate('/deal')}
+      >
+        Deal random cards
+      </button>
     </div>
   );
 }

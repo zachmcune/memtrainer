@@ -3,6 +3,7 @@ import { UpdateBanner } from './components/UpdateBanner';
 import { HomePage } from './features/home/HomePage';
 import { TrainingPage } from './features/training/TrainingPage';
 import { TrainingResumeBanner } from './features/training/TrainingRunner';
+import { DealPage } from './features/deal/DealPage';
 import { DeckPage } from './features/deck/DeckPage';
 import { OrderPage } from './features/order/OrderPage';
 import { SettingsPage } from './features/settings/SettingsPage';
@@ -39,6 +40,7 @@ export default function App() {
             <Routes location={location}>
               <Route path="/" element={<HomePage />} />
               <Route path="/train" element={<TrainingPage />} />
+              <Route path="/deal" element={<DealPage />} />
               <Route path="/order" element={<OrderPage />} />
               <Route path="/stack" element={<DeckPage />} />
               <Route path="/settings" element={<SettingsPage />} />
@@ -49,6 +51,7 @@ export default function App() {
         <nav className="app-nav">
           <NavItem to="/" label="Home" icon={'\u2660'} />
           <NavItem to="/train" label="Train" icon={'\u25B6'} />
+          <NavItem to="/deal" label="Deal" icon={'\u2666'} />
           <NavItem to="/order" label="Order" icon={'\u21C5'} />
           <NavItem to="/stack" label="Stack" icon={'\u2663'} />
           <NavItem to="/stats" label="Stats" icon={'\u25A6'} />

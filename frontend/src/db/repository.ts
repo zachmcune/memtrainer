@@ -36,6 +36,12 @@ class DexieStatsRepository implements StatsRepository {
           ...DEFAULT_SETTINGS.stackScope,
           ...(existing.stackScope ?? DEFAULT_SETTINGS.stackScope),
         }),
+        generatorScope: normalizeScopeConfig({
+          ...DEFAULT_SETTINGS.generatorScope,
+          ...(existing.generatorScope ?? DEFAULT_SETTINGS.generatorScope),
+        }),
+        generatorMode: existing.generatorMode ?? DEFAULT_SETTINGS.generatorMode,
+        generatorNoRepeats: existing.generatorNoRepeats ?? DEFAULT_SETTINGS.generatorNoRepeats,
         queueStrategy: existing.queueStrategy ?? DEFAULT_SETTINGS.queueStrategy,
         flashPrompt: existing.flashPrompt ?? DEFAULT_SETTINGS.flashPrompt,
         theme: existing.theme ?? DEFAULT_SETTINGS.theme,

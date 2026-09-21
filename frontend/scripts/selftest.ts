@@ -15,6 +15,7 @@ import {
   MS_PER_DAY,
   withScheduleDefaults,
 } from '../src/db/schedule';
+import { createDealDraw } from '../src/features/deal/deal';
 import { positionOf, cardAtPosition, DECK_SIZE, stackGroupPositions } from '../src/data/mnemonica';
 import { rankCardStats, summarizeSession, computeStreak } from '../src/features/stats/compute';
 import { isRemoteNewer, isSameBuild } from '../src/version';
@@ -225,5 +226,52 @@ assert.equal(isSameBuild(v100a, v100b), false);
 assert.equal(isRemoteNewer(v100a, v110), true);
 assert.equal(isRemoteNewer(v100a, v100b), true);
 assert.equal(isRemoteNewer(v110, v100a), false);
+
+// Random card generator (Deal)
+const dealScope = [1, 2, 3, 4];
+assert.equal(createDealDraw('card', [], [], true), null);
+
+const firstUnique = createDealDraw('card', [], dealScope, true);
+assert.ok(firstUnique);
+assert.ok(dealScope.includes(firstUnique.draw.cardPosition));
+assert.equal(firstUnique.draw.cardPosition, firstUnique.draw.numberPosition);
+assert.equal(firstUnique.pile.length, 3);
+assert.ok(!firstUnique.pile.includes(firstUnique.draw.cardPosition));
+
+const uniqueSeen = new Set<number>([firstUnique.draw.cardPosition]);
+let uniquePile = firstUnique.pile;
+for (let i = 0; i < 3; i += 1) {
+  const next = createDealDraw('card', uniquePile, dealScope, true);
+  assert.ok(next);
+  assert.ok(!uniqueSeen.has(next.draw.cardPosition));
+  uniqueSeen.add(next.draw.cardPosition);
+  uniquePile = next.pile;
+}
+assert.equal(uniqueSeen.size, 4);
+assert.equal(uniquePile.length, 0);
+
+const afterReshuffle = createDealDraw('card', uniquePile, dealScope, true);
+assert.ok(afterReshuffle);
+assert.ok(dealScope.includes(afterReshuffle.draw.cardPosition));
+assert.equal(afterReshuffle.reshuffled, true);
+assert.equal(afterReshuffle.pile.length, 3);
+
+const withRepeats = createDealDraw('card', [9], dealScope, false);
+assert.ok(withRepeats);
+assert.deepEqual(withRepeats.pile, [9]);
+assert.equal(withRepeats.reshuffled, false);
+assert.ok(dealScope.includes(withRepeats.draw.cardPosition));
+
+// Deterministic both-mode: shuffle always swaps with index 0, then number pick uses 0.
+const bothRng = (() => {
+  const rolls = [0, 0, 0, 0, 0, 0, 0];
+  let i = 0;
+  return () => rolls[Math.min(i++, rolls.length - 1)]!;
+})();
+const both = createDealDraw('both', [], dealScope, true, bothRng);
+assert.ok(both);
+assert.ok(dealScope.includes(both.draw.cardPosition));
+assert.ok(dealScope.includes(both.draw.numberPosition));
+assert.notEqual(both.draw.cardPosition, both.draw.numberPosition);
 
 console.log('All self-tests passed.');

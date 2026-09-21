@@ -92,6 +92,14 @@ export function HomePage() {
       >
         {dueCount !== null && dueCount > 0 ? `Review ${dueCount} due` : 'Start training'}
       </Link>
+      <Link
+        to="/deal"
+        className="btn block"
+        style={{ marginTop: 10 }}
+        onClick={() => play('tap')}
+      >
+        Deal random cards
+      </Link>
 
       <div className="card-panel" style={{ marginTop: 14 }}>
         <div className="row spread">
