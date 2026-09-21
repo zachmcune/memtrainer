@@ -1,5 +1,8 @@
 export type TrainingMode = 'card-to-position' | 'position-to-card';
 
+/** How the Deal page generates a random prompt for trick rehearsal. */
+export type DealMode = 'card' | 'number' | 'both';
+
 /** How the training session picks which cards to prompt next. */
 export type QueueStrategy = 'spaced' | 'random' | 'dynamic';
 
@@ -78,6 +81,12 @@ export interface AppSettings {
   scope: ScopeConfig;
   /** Cards visible in the Stack tab carousel (independent from training scope). */
   stackScope: ScopeConfig;
+  /** Cards and numbers the Deal page can generate (independent from training scope). */
+  generatorScope: ScopeConfig;
+  /** What the Deal page shows: a named card, a named number, or both. */
+  generatorMode: DealMode;
+  /** When true, Deal does not repeat a card until every in-scope card has appeared. */
+  generatorNoRepeats: boolean;
   /** Number of prompts per session, or 'all' to cover the whole scope once. */
   sessionLength: number | 'all';
   /** How cards are ordered in a session. */

@@ -47,6 +47,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (patch.stackScope) {
           next.stackScope = normalizeScopeConfig(next.stackScope);
         }
+        if (patch.generatorScope) {
+          next.generatorScope = normalizeScopeConfig(next.generatorScope);
+        }
         void repository.saveSettings(next);
         return next;
       });
