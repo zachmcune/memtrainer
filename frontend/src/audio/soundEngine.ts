@@ -4,6 +4,7 @@ export type SoundName =
   | 'toggle'
   | 'nav'
   | 'deal'
+  | 'flourish'
   | 'correct'
   | 'wrong'
   | 'win';
@@ -114,6 +115,14 @@ class SoundEngine {
       case 'deal':
         this.noise(0.16, 0.22, 1400);
         break;
+      case 'flourish':
+        this.whoosh();
+        this.noise(0.07, 0.24, 1700, 0.9);
+        this.tones(
+          [{ freq: 920, at: 0.92, dur: 0.05, type: 'triangle', gain: 0.4 }],
+          0.16,
+        );
+        break;
       case 'correct':
         this.tones(
           [
@@ -168,7 +177,7 @@ class SoundEngine {
     }
   }
 
-  private noise(dur: number, peak: number, cutoff: number) {
+  private noise(dur: number, peak: number, cutoff: number, at = 0) {
     const ctx = this.ctx;
     const master = this.master;
     if (!ctx || !master) return;
@@ -186,7 +195,7 @@ class SoundEngine {
     filter.type = 'lowpass';
     filter.frequency.value = cutoff;
     const g = ctx.createGain();
-    const t0 = ctx.currentTime + 0.001;
+    const t0 = ctx.currentTime + 0.001 + at;
     g.gain.setValueAtTime(peak, t0);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     src.connect(filter);
@@ -194,6 +203,53 @@ class SoundEngine {
     g.connect(master);
     src.start(t0);
     src.stop(t0 + dur + 0.02);
+  }
+
+  /** Rising air burst for the card toss, plus a soft pitch glide. */
+  private whoosh() {
+    const ctx = this.ctx;
+    const master = this.master;
+    if (!ctx || !master) return;
+    const dur = 0.52;
+    const frames = Math.floor(ctx.sampleRate * dur);
+    const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < frames; i += 1) {
+      const p = i / frames;
+      const env = Math.sin(Math.PI * p);
+      data[i] = (Math.random() * 2 - 1) * env;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.Q.value = 0.65;
+    const t0 = ctx.currentTime + 0.001;
+    filter.frequency.setValueAtTime(260, t0);
+    filter.frequency.exponentialRampToValueAtTime(2600, t0 + 0.26);
+    filter.frequency.exponentialRampToValueAtTime(640, t0 + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.2, t0 + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(filter);
+    filter.connect(g);
+    g.connect(master);
+    src.start(t0);
+    src.stop(t0 + dur + 0.02);
+
+    const osc = ctx.createOscillator();
+    const og = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(210, t0);
+    osc.frequency.exponentialRampToValueAtTime(680, t0 + 0.3);
+    og.gain.setValueAtTime(0.0001, t0);
+    og.gain.exponentialRampToValueAtTime(0.07, t0 + 0.03);
+    og.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.38);
+    osc.connect(og);
+    og.connect(master);
+    osc.start(t0);
+    osc.stop(t0 + 0.4);
   }
 }
 

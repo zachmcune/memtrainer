@@ -4,6 +4,7 @@ import { HomePage } from './features/home/HomePage';
 import { TrainingPage } from './features/training/TrainingPage';
 import { TrainingResumeBanner } from './features/training/TrainingRunner';
 import { DeckPage } from './features/deck/DeckPage';
+import { DealPage } from './features/deal/DealPage';
 import { OrderPage } from './features/order/OrderPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { StatsPage } from './features/stats/StatsPage';
@@ -40,6 +41,7 @@ export default function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/train" element={<TrainingPage />} />
               <Route path="/order" element={<OrderPage />} />
+              <Route path="/deal" element={<DealPage />} />
               <Route path="/stack" element={<DeckPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/stats" element={<StatsPage />} />

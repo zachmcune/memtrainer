@@ -93,6 +93,17 @@ export function HomePage() {
         {dueCount !== null && dueCount > 0 ? `Review ${dueCount} due` : 'Start training'}
       </Link>
 
+      <Link to="/deal" className="card-panel deal-teaser" onClick={() => play('tap')}>
+        <span className="deal-teaser-mark" aria-hidden>
+          {'\u2197'}
+        </span>
+        <span className="deal-teaser-copy">
+          <span className="deal-teaser-title">Random card</span>
+          <span className="deal-teaser-sub">Shoot one out of the deck</span>
+        </span>
+        <span className="pill">Deal</span>
+      </Link>
+
       <div className="card-panel" style={{ marginTop: 14 }}>
         <div className="row spread">
           <span className="muted">Today&apos;s drill</span>
