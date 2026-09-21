@@ -359,10 +359,10 @@ export function DealPage() {
                       </span>
                       <span className="deal-history-meta">
                         {settings.generatorMode === 'number'
-                          ? `#${item.numberPosition}`
+                          ? `#${item.numberPosition} · ${cardLabel(histCard)}`
                           : settings.generatorMode === 'both'
-                            ? `${cardLabel(histCard)} · #${item.numberPosition}`
-                            : `#${item.cardPosition}`}
+                            ? `${cardLabel(histCard)} · named #${item.numberPosition}`
+                            : `${cardLabel(histCard)} · #${item.cardPosition}`}
                       </span>
                     </li>
                   );

@@ -249,6 +249,7 @@ a {
   height: calc(var(--nav-h) + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
   display: flex;
+  justify-content: center;
   background: color-mix(in srgb, var(--bg-base) 78%, transparent);
   backdrop-filter: blur(var(--panel-blur)) saturate(1.2);
   -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(1.2);
@@ -260,6 +261,7 @@ a {
 .nav-item {
   position: relative;
   flex: 1;
+  max-width: 88px;
   display: flex;
   flex-direction: column;
   align-items: center;
