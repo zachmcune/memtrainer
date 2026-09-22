@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { CardBack, PlayingCard } from '../../components/PlayingCard';
 import { cardLabel } from '../../data/deck';
 import { DECK_SIZE, cardAtPosition } from '../../data/mnemonica';
@@ -52,6 +52,9 @@ export function DealPage() {
   const [revealed, setRevealed] = useState<number | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [repeat, setRepeat] = useState(false);
+  const [showCard, setShowCard] = useState(true);
+  const [showIdentity, setShowIdentity] = useState(true);
+  const [showNeighbors, setShowNeighbors] = useState(true);
 
   const packetRef = useRef(packet);
   const revealedRef = useRef(revealed);
@@ -98,6 +101,13 @@ export function DealPage() {
       setPacket(fresh);
       setBanner(null);
     }
+    play('toggle');
+  }, [play]);
+
+  const toggleVisibility = useCallback((part: 'card' | 'identity' | 'neighbors') => {
+    if (part === 'card') setShowCard((v) => !v);
+    else if (part === 'identity') setShowIdentity((v) => !v);
+    else setShowNeighbors((v) => !v);
     play('toggle');
   }, [play]);
 
@@ -238,7 +248,9 @@ export function DealPage() {
   return (
     <div className="deal-page">
       <h1>Random card</h1>
-      <p className="subtitle">Shoot one out of the deck. The stack number comes with it.</p>
+      <p className="subtitle">
+        Shoot one out of the deck. Cover the card, its number and name, or the neighbors to test each part.
+      </p>
 
       <div className="card-panel flourish-repeat">
         <div>
@@ -262,28 +274,81 @@ export function DealPage() {
       </div>
 
       <div className="flourish-stage" ref={stageRef}>
-        <div className="flourish-land" ref={landRef}>
-          {phase === 'shown' && revealedCard ? (
-            <div className="flourish-landed-wrap" key={revealedCard.code} aria-hidden>
-              <PlayingCard card={revealedCard} width="100%" />
+        <div className="flourish-vis-row">
+          <div className="flourish-vis-body">
+            <div className="flourish-land" ref={landRef}>
+              {phase === 'shown' && revealedCard ? (
+                <div
+                  className={`flourish-landed-wrap${showCard ? '' : ' is-covered'}`}
+                  key={showCard ? revealedCard.code : `${revealedCard.code}-covered`}
+                  aria-hidden
+                >
+                  {showCard ? (
+                    <PlayingCard card={revealedCard} width="100%" />
+                  ) : (
+                    <CardBack width="100%" />
+                  )}
+                </div>
+              ) : (
+                <div className="flourish-land-ghost">{phase === 'shooting' ? '' : 'Ready'}</div>
+              )}
             </div>
-          ) : (
-            <div className="flourish-land-ghost">{phase === 'shooting' ? '' : 'Ready'}</div>
-          )}
+          </div>
+          {phase === 'shown' && revealedCard ? (
+            <VisibilityButton
+              shown={showCard}
+              label="main card"
+              onClick={() => toggleVisibility('card')}
+            />
+          ) : null}
         </div>
 
         <div className="flourish-readout" aria-live="polite">
           {phase === 'shown' && revealedCard && revealed != null ? (
             <>
-              <div className="flourish-pos" key={revealed}>
-                <span>#</span>
-                {revealed}
-              </div>
-              <p className="flourish-name">{cardLabel(revealedCard)}</p>
-              <div className="flourish-neighbors">
-                <SideCard label="Before" position={revealed > 1 ? revealed - 1 : null} />
-                <SideCard label="After" position={revealed < DECK_SIZE ? revealed + 1 : null} />
-              </div>
+              <VisRow
+                label="card number and name"
+                shown={showIdentity}
+                onToggle={() => toggleVisibility('identity')}
+              >
+                <div className="flourish-identity">
+                  {showIdentity ? (
+                    <>
+                      <div className="flourish-pos" key={revealed}>
+                        <span>#</span>
+                        {revealed}
+                      </div>
+                      <p className="flourish-name">{cardLabel(revealedCard)}</p>
+                    </>
+                  ) : (
+                    <div className="flourish-redact-stack">
+                      <div className="flourish-redact flourish-redact-pos" aria-hidden />
+                      <div className="flourish-redact flourish-redact-name" aria-hidden />
+                      <span className="flourish-cover-note">Card number and name covered</span>
+                    </div>
+                  )}
+                </div>
+              </VisRow>
+              <VisRow
+                label="before and after cards"
+                shown={showNeighbors}
+                onToggle={() => toggleVisibility('neighbors')}
+              >
+                <div className="flourish-neighbors">
+                  <SideCard
+                    label="Before"
+                    position={revealed > 1 ? revealed - 1 : null}
+                    covered={!showNeighbors}
+                    showPosition={showNeighbors && showIdentity}
+                  />
+                  <SideCard
+                    label="After"
+                    position={revealed < DECK_SIZE ? revealed + 1 : null}
+                    covered={!showNeighbors}
+                    showPosition={showNeighbors && showIdentity}
+                  />
+                </div>
+              </VisRow>
             </>
           ) : (
             <p className="muted flourish-prompt">
@@ -347,7 +412,11 @@ export function DealPage() {
             </div>
             <div className="flourish-face flourish-front">
               <div className="flourish-face-inner">
-                {flyingCard ? <PlayingCard card={flyingCard} width="100%" /> : null}
+                {flyingCard && showCard ? (
+                  <PlayingCard card={flyingCard} width="100%" />
+                ) : (
+                  <CardBack width="100%" />
+                )}
               </div>
             </div>
           </div>
@@ -378,17 +447,100 @@ export function DealPage() {
   );
 }
 
-function SideCard({ label, position }: { label: string; position: number | null }) {
+function SideCard({
+  label,
+  position,
+  covered,
+  showPosition,
+}: {
+  label: string;
+  position: number | null;
+  covered: boolean;
+  showPosition: boolean;
+}) {
   const card = position != null ? cardAtPosition(position) : null;
+  const hideFace = covered && card != null;
   return (
     <div className="flourish-side">
       {card ? (
-        <PlayingCard card={card} width={48} />
+        hideFace ? (
+          <CardBack width={48} />
+        ) : (
+          <PlayingCard card={card} width={48} />
+        )
       ) : (
         <div className="flourish-side-empty" aria-hidden />
       )}
-      <span className="flourish-side-pos">{position != null ? `#${position}` : '—'}</span>
+      {showPosition && position != null ? (
+        <span className="flourish-side-pos">#{position}</span>
+      ) : card ? (
+        <span className="flourish-side-pos flourish-side-pos-hidden" aria-hidden />
+      ) : (
+        <span className="flourish-side-pos">—</span>
+      )}
       <span className="flourish-side-label">{label}</span>
     </div>
+  );
+}
+
+function VisRow({
+  label,
+  shown,
+  onToggle,
+  children,
+}: {
+  label: string;
+  shown: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flourish-vis-row">
+      <div className="flourish-vis-body">{children}</div>
+      <VisibilityButton shown={shown} label={label} onClick={onToggle} />
+    </div>
+  );
+}
+
+function VisibilityButton({
+  shown,
+  label,
+  onClick,
+}: {
+  shown: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`flourish-vis-btn${shown ? '' : ' is-off'}`}
+      onClick={onClick}
+      aria-pressed={shown}
+      aria-label={`${shown ? 'Hide' : 'Show'} ${label}`}
+      title={`${shown ? 'Hide' : 'Show'} ${label}`}
+    >
+      <EyeIcon off={!shown} />
+    </button>
+  );
+}
+
+function EyeIcon({ off }: { off: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      {off ? (
+        <>
+          <path d="M3 3l18 18" />
+          <path d="M10.5 6.2A11 11 0 0 1 12 6c6.5 0 10 6 10 6a18 18 0 0 1-3.1 3.7" />
+          <path d="M6.2 6.8C3.9 8.4 2 12 2 12s3.5 6 10 6c1.2 0 2.4-.2 3.5-.6" />
+          <path d="M9.9 9.9a2.6 2.6 0 0 0 3.6 3.6" />
+        </>
+      ) : (
+        <>
+          <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z" />
+          <circle cx="12" cy="12" r="2.6" />
+        </>
+      )}
+    </svg>
   );
 }
